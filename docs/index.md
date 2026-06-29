@@ -5,6 +5,9 @@ hero:
   name: SwiftFlow
   text: SwiftUI Node Graph Editor
   tagline: Build interactive flow diagrams, workflow editors, mind maps, and visual programming interfaces on iOS and macOS.
+  image:
+    src: mascot.png
+    alt: SwiftFlow SwiftUI Node Graph Editor
   actions:
     - theme: brand
       text: Get Started
