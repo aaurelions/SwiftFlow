@@ -26,7 +26,7 @@ A SwiftUI-native node-based graph editor inspired by [ReactFlow](https://reactfl
 | -------- | --------------- |
 | iOS      | 16.0+           |
 | macOS    | 13.0+           |
-| Swift    | 6.2+            |
+| Swift    | 6.1+            |
 
 ## Installation
 

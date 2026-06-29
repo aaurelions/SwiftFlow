@@ -6,7 +6,7 @@
 |----------|-----------------|
 | iOS      | 16.0+           |
 | macOS    | 13.0+           |
-| Swift    | 6.2+            |
+| Swift    | 6.1+            |
 
 SwiftFlow is a **zero-dependency** library — pure SwiftUI, no third-party packages required.
 
@@ -24,7 +24,7 @@ SwiftFlow is a **zero-dependency** library — pure SwiftUI, no third-party pack
 For local development with the demo package checked out beside your app, add SwiftFlow as a path dependency in your `Package.swift`:
 
 ```swift
-// swift-tools-version: 6.2
+// swift-tools-version: 6.1
 import PackageDescription
 
 let package = Package(

@@ -85,7 +85,7 @@ struct ContentView: View {
 |----------|-----------------|
 | iOS      | 16.0+           |
 | macOS    | 13.0+           |
-| Swift    | 6.2+            |
+| Swift    | 6.1+            |
 
 SwiftFlow is a **zero-dependency** library — pure SwiftUI, no third-party packages.
 

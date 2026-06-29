@@ -2,7 +2,7 @@
 name: SwiftFlow
 description: Comprehensive documentation and mapping between ReactFlow (TypeScript) and SwiftFlow (SwiftUI). Use this skill to translate ReactFlow concepts to SwiftFlow or to build native node-based graph editors in iOS and macOS using familiar ReactFlow patterns.
 license: MIT
-compatibility: iOS 16.0+, macOS 13.0+, Swift 6.2+
+compatibility: iOS 16.0+, macOS 13.0+, Swift 6.1+
 metadata:
   author: swiftflow-community
   version: "0.1.0"

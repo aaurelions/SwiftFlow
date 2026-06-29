@@ -19,7 +19,7 @@ Choose version `0.1.0` or the latest release.
 Alternatively, add it to your `Package.swift`:
 
 ```swift
-// swift-tools-version: 6.2
+// swift-tools-version: 6.1
 import PackageDescription
 
 let package = Package(
@@ -231,6 +231,6 @@ struct FlowNodeView: View {
 |----------|-----------------|
 | iOS      | 16.0+           |
 | macOS    | 13.0+           |
-| Swift    | 6.2+            |
+| Swift    | 6.1+            |
 
 SwiftFlow is a **zero-dependency** library — no third-party packages beyond Apple's frameworks.
