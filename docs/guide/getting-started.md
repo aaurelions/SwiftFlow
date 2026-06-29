@@ -83,10 +83,14 @@ Now users can drag from an output handle to an input handle to create edges.
 
 ## Adding Overlays
 
-Place overlay components in the `overlay` closure to add background grids, controls, minimap, and custom panels:
+Place overlay components in the `overlay` closure to add background grids, controls, minimap, and custom panels. This example assumes the view owns `@StateObject var instance = SwiftFlowInstance()` for the reset button:
 
 ```swift
-SwiftFlow(nodes: nodes, edges: edges, ...) { node in
+SwiftFlow(
+    nodes: nodes,
+    edges: edges,
+    swiftFlowInstance: instance
+) { node in
     // node view
 } overlay: {
     Background(variant: .dots, gap: 20)
@@ -95,8 +99,17 @@ SwiftFlow(nodes: nodes, edges: edges, ...) { node in
 
     Panel(position: .topRight) {
         VStack {
-            Button("Add Node") { /* ... */ }
-            Button("Reset View") { /* ... */ }
+            Button("Add Node") {
+                let node = Node(
+                    id: UUID().uuidString,
+                    position: XYPosition(x: 120, y: 120),
+                    data: "New Node"
+                )
+                nodes = applyNodeChanges([.add(item: node)], nodes: nodes)
+            }
+            Button("Reset View") {
+                instance.reset()
+            }
         }
         .padding(8)
         .background(.ultraThinMaterial)

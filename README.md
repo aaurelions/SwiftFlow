@@ -1,6 +1,6 @@
 # SwiftFlow
 
-<img align="center" src="https://github.com/aaurelions/SwiftFlow/raw/main/docs/screenshot.png" width="800"/>
+<img align="center" src="https://github.com/aaurelions/SwiftFlow/raw/main/docs/public/screenshot.png" width="800"/>
 
 A SwiftUI-native node-based graph editor inspired by [ReactFlow](https://reactflow.dev). Build interactive flow diagrams, workflow editors, mind maps, and visual programming interfaces on iOS and macOS.
 
@@ -15,7 +15,7 @@ A SwiftUI-native node-based graph editor inspired by [ReactFlow](https://reactfl
 - **Overlay Components** — Background patterns, minimap, controls panel, toolbars, and more
 - **Undo / Redo** — Built-in undo/redo support on macOS
 - **Auto Layout** — Tree, force-directed, and grid layout algorithms
-- **Serialization** — JSON import/export with `Codable` support
+- **Serialization** — JSON import/export with `Codable` support <img align="right" src="https://github.com/aaurelions/SwiftFlow/raw/main/docs/public/mascot.png" alt="SwiftFlow SwiftUI Node Graph Editor" width="120" />
 - **Accessibility** — VoiceOver labels and keyboard navigation
 - **Theming** — Light, dark, and custom themes
 - **Zero Dependencies** — Pure SwiftUI, no third-party packages
@@ -212,7 +212,7 @@ SwiftFlow(
 
     // Appearance
     snapToGrid: false,
-    snapGrid: (x: 15, y: 15),
+    snapGrid: (x: 20, y: 20),
     theme: .default,
 
     // Callbacks
@@ -251,7 +251,7 @@ SwiftFlow(
 | Property           | Type                       | Default     | Description            |
 | ------------------ | -------------------------- | ----------- | ---------------------- |
 | `snapToGrid`       | `Bool`                     | `false`     | Snap positions to grid |
-| `snapGrid`         | `(x: CGFloat, y: CGFloat)` | `(15, 15)`  | Grid spacing           |
+| `snapGrid`         | `(x: CGFloat, y: CGFloat)` | `(20, 20)`  | Grid spacing           |
 | `theme`            | `SwiftFlowTheme`           | `.default`  | Visual theme           |
 | `colorMode`        | `ColorMode`                | `.system`   | Light/dark/system      |
 | `zIndexMode`       | `ZIndexMode`               | `.auto`     | Z-ordering strategy    |
@@ -316,8 +316,8 @@ Handle(nodeId: node.id, id: "input", type: .target, position: .left)
 | Property        | Type         | Default     | Description                          |
 | --------------- | ------------ | ----------- | ------------------------------------ |
 | `nodeId`        | `String`     | —           | Parent node ID (required)            |
-| `id`            | `String`     | `"default"` | Handle identifier                    |
-| `type`          | `HandleType` | —           | `.source` or `.target`               |
+| `id`            | `String`     | —           | Handle identifier (required)         |
+| `type`          | `HandleType` | `.source`   | `.source` or `.target`               |
 | `position`      | `Position`   | —           | `.top`, `.bottom`, `.left`, `.right` |
 | `color`         | `Color`      | `.gray`     | Handle fill color                    |
 | `isConnectable` | `Bool`       | `true`      | Enable connections                   |
@@ -474,15 +474,20 @@ NodeResizer(
     nodeId: node.id,
     direction: .bottomRight,
     minWidth: 100, maxWidth: 500,
-    minHeight: 50, maxHeight: 400
-) { width, height in
-    onNodesChange?([.dimensions(id: node.id, width: width, height: height)])
-}
+    minHeight: 50, maxHeight: 400,
+    onResize: { width, height in
+        onNodesChange?([.dimensions(id: node.id, width: width, height: height)])
+    }
+)
 
 // Individual resize control (single handle)
-NodeResizeControl(nodeId: node.id, position: .bottomRight) { width, height in
-    onNodesChange?([.dimensions(id: node.id, width: width, height: height)])
-}
+NodeResizeControl(
+    nodeId: node.id,
+    position: .bottomRight,
+    onResize: { width, height in
+        onNodesChange?([.dimensions(id: node.id, width: width, height: height)])
+    }
+)
 ```
 
 ---
