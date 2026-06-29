@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitepress'
 
 export default defineConfig({
+  base: '/SwiftFlow/',
   lang: 'en-US',
   title: 'SwiftFlow',
   description: 'A SwiftUI-native node-based graph editor for iOS and macOS.',
