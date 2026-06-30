@@ -30,6 +30,9 @@ jobs:
       - name: Show Swift version
         run: swift --version
 
+      - name: Remove untrusted Homebrew taps
+        run: brew untap aws/tap || true
+
       - name: Install Swift linters
         run: brew install swift-format swiftlint
 
