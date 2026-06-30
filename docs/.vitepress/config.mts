@@ -26,6 +26,8 @@ export default defineConfig({
       { text: "Examples", link: "/examples/ai-flow" },
     ],
 
+    socialLinks: [{ icon: "github", link: "https://github.com/aaurelions/SwiftFlow" }],
+
     sidebar: {
       "/guide/": [
         {
