@@ -14,7 +14,7 @@ Add SwiftFlow to your project via Xcode: **File → Add Package Dependencies...*
 https://github.com/aaurelions/SwiftFlow.git
 ```
 
-Choose version `0.1.0` or the latest release.
+Choose version `0.1.1` or the latest release.
 
 Alternatively, add it to your `Package.swift`:
 
@@ -29,7 +29,7 @@ let package = Package(
         .macOS(.v13)
     ],
     dependencies: [
-        .package(url: "https://github.com/aaurelions/SwiftFlow.git", from: "0.1.0")
+        .package(url: "https://github.com/aaurelions/SwiftFlow.git", from: "0.1.1")
     ],
     targets: [
         .executableTarget(

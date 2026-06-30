@@ -18,22 +18,22 @@ import SwiftUI
 /// }
 /// ```
 public struct SwiftFlowProvider<
-    NodeData: Equatable & Sendable, EdgeData: Equatable & Sendable & Hashable, Content: View
+  NodeData: Equatable & Sendable, EdgeData: Equatable & Sendable & Hashable, Content: View
 >: View {
-    @StateObject private var store: SwiftFlowStore<NodeData, EdgeData>
-    @ViewBuilder public var content: (SwiftFlowStore<NodeData, EdgeData>) -> Content
+  @StateObject private var store: SwiftFlowStore<NodeData, EdgeData>
+  @ViewBuilder public var content: (SwiftFlowStore<NodeData, EdgeData>) -> Content
 
-    public init(
-        nodes: [Node<NodeData>] = [],
-        edges: [Edge<EdgeData>] = [],
-        @ViewBuilder content: @escaping (SwiftFlowStore<NodeData, EdgeData>) -> Content
-    ) {
-        _store = StateObject(wrappedValue: SwiftFlowStore(nodes: nodes, edges: edges))
-        self.content = content
-    }
+  public init(
+    nodes: [Node<NodeData>] = [],
+    edges: [Edge<EdgeData>] = [],
+    @ViewBuilder content: @escaping (SwiftFlowStore<NodeData, EdgeData>) -> Content
+  ) {
+    _store = StateObject(wrappedValue: SwiftFlowStore(nodes: nodes, edges: edges))
+    self.content = content
+  }
 
-    public var body: some View {
-        content(store)
-            .environmentObject(store)
-    }
+  public var body: some View {
+    content(store)
+      .environmentObject(store)
+  }
 }

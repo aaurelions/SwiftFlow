@@ -5,6 +5,6 @@ import Foundation
 /// Unlike inferring from position alone, explicitly setting the type
 /// allows handles at any position to function as either source or target.
 public enum HandleType: String, Equatable, Sendable, Codable, Hashable {
-    case source
-    case target
+  case source
+  case target
 }

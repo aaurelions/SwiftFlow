@@ -1,6 +1,6 @@
 {
   "name": "swiftflow-docs",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,6 +9,6 @@
     "docs:preview": "vitepress preview"
   },
   "devDependencies": {
-    "vitepress": "2.0.0-alpha.17"
+    "vitepress": "^1.6.4"
   }
 }

@@ -6,7 +6,7 @@ import SwiftUI
 /// @Environment(\.swiftFlowInstance) var instance
 /// ```
 private struct SwiftFlowInstanceKey: EnvironmentKey {
-    static let defaultValue: SwiftFlowInstance? = nil
+  static let defaultValue: SwiftFlowInstance? = nil
 }
 
 /// Environment key indicating whether all nodes have been measured.
@@ -15,17 +15,17 @@ private struct SwiftFlowInstanceKey: EnvironmentKey {
 /// @Environment(\.nodesInitialized) var nodesInitialized
 /// ```
 private struct NodesInitializedKey: EnvironmentKey {
-    static let defaultValue: Bool = false
+  static let defaultValue: Bool = false
 }
 
-public extension EnvironmentValues {
-    var swiftFlowInstance: SwiftFlowInstance? {
-        get { self[SwiftFlowInstanceKey.self] }
-        set { self[SwiftFlowInstanceKey.self] = newValue }
-    }
+extension EnvironmentValues {
+  public var swiftFlowInstance: SwiftFlowInstance? {
+    get { self[SwiftFlowInstanceKey.self] }
+    set { self[SwiftFlowInstanceKey.self] = newValue }
+  }
 
-    var nodesInitialized: Bool {
-        get { self[NodesInitializedKey.self] }
-        set { self[NodesInitializedKey.self] = newValue }
-    }
+  public var nodesInitialized: Bool {
+    get { self[NodesInitializedKey.self] }
+    set { self[NodesInitializedKey.self] = newValue }
+  }
 }

@@ -4,8 +4,8 @@ description: Comprehensive documentation and mapping between ReactFlow (TypeScri
 license: MIT
 compatibility: iOS 16.0+, macOS 13.0+, Swift 6.1+
 metadata:
-  author: swiftflow-community
-  version: "0.1.0"
+  author: A.Aurelions
+  version: "0.1.1"
 ---
 
 # SwiftFlow Documentation

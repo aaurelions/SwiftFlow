@@ -6,7 +6,7 @@ import Foundation
 /// - `basic`: Only manages z-index for selections (selected nodes come to front).
 /// - `manual`: No automatic z-indexing; all values are user-controlled.
 public enum ZIndexMode: String, Equatable, Sendable, Codable, Hashable {
-    case auto
-    case basic
-    case manual
+  case auto
+  case basic
+  case manual
 }

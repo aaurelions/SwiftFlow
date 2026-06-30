@@ -12,23 +12,23 @@ import SwiftUI
 /// }
 /// ```
 public struct EdgeLabelRenderer<Content: View>: View {
-    public var position: CGPoint
-    @ViewBuilder public var content: () -> Content
+  public var position: CGPoint
+  @ViewBuilder public var content: () -> Content
 
-    @EnvironmentObject private var flowState: SwiftFlowState
+  @EnvironmentObject private var flowState: SwiftFlowState
 
-    public init(
-        position: CGPoint,
-        @ViewBuilder content: @escaping () -> Content
-    ) {
-        self.position = position
-        self.content = content
-    }
+  public init(
+    position: CGPoint,
+    @ViewBuilder content: @escaping () -> Content
+  ) {
+    self.position = position
+    self.content = content
+  }
 
-    public var body: some View {
-        let zoom = max(flowState.viewport.zoom, 0.01)
-        content()
-            .scaleEffect(1 / zoom)
-            .position(x: position.x, y: position.y)
-    }
+  public var body: some View {
+    let zoom = max(flowState.viewport.zoom, 0.01)
+    content()
+      .scaleEffect(1 / zoom)
+      .position(x: position.x, y: position.y)
+  }
 }

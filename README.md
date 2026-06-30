@@ -42,7 +42,7 @@ Or add it to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/aaurelions/SwiftFlow.git", from: "0.1.0")
+    .package(url: "https://github.com/aaurelions/SwiftFlow.git", from: "0.1.1")
 ]
 ```
 
@@ -999,7 +999,7 @@ When `extent` is `.parent`, the node cannot be dragged outside its parent node's
 
 ## ReactFlow Compatibility
 
-SwiftFlow adapts familiar ReactFlow concepts to SwiftUI-native APIs. Release 0.1.0 focuses on the core canvas, nodes, edges, handles, overlays, callbacks, graph utilities, serialization, theming, and auto layout; some ReactFlow-specific browser APIs are intentionally different or not applicable on Apple platforms.
+SwiftFlow adapts familiar ReactFlow concepts to SwiftUI-native APIs. Release 0.1.1 focuses on the core canvas, nodes, edges, handles, overlays, callbacks, graph utilities, serialization, theming, and auto layout; some ReactFlow-specific browser APIs are intentionally different or not applicable on Apple platforms.
 
 ### Key Differences
 
@@ -1015,7 +1015,7 @@ SwiftFlow adapts familiar ReactFlow concepts to SwiftUI-native APIs. Release 0.1
 
 ### Feature Parity
 
-| Category               | SwiftFlow 0.1.0 Status |
+| Category               | SwiftFlow 0.1.1 Status |
 | ---------------------- | ---------------------- |
 | Components             | Core canvas, handles, controls, minimap, backgrounds, panels, toolbars, resize controls, and edge label helpers |
 | State Patterns         | Change callbacks, `SwiftFlowStore`, `SwiftFlowProvider`, and `SwiftFlowInstance` |
@@ -1027,4 +1027,4 @@ SwiftFlow adapts familiar ReactFlow concepts to SwiftUI-native APIs. Release 0.1
 
 ## License
 
-See [LICENSE](LICENSE) for details.
+See [LICENSE.md](LICENSE.md) for details.
