@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   swift-test:
-    name: SwiftPM Build & Test
+    name: Swift format, lint, and test
     runs-on: macos-15
     timeout-minutes: 20
     steps:
@@ -30,41 +30,53 @@ jobs:
       - name: Show Swift version
         run: swift --version
 
+      - name: Install Swift linters
+        run: brew install swift-format swiftlint
+
       - name: Resolve package dependencies
         run: swift package resolve
-        working-directory: .
 
-      - name: Build
-        run: swift build --configuration release
-        working-directory: .
+      - name: Check formatting
+        run: swift-format lint --recursive Sources Tests Package.swift
 
-      - name: Test
-        run: swift test --configuration release
-        working-directory: .
+      - name: Run SwiftLint
+        run: swiftlint lint --quiet
 
-  build:
+      - name: Run tests
+        run: swift test
+
+  build-docs:
+    name: Build documentation
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+
       - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: docs/package-lock.json
-      - run: npm ci
+
+      - name: Install documentation dependencies
         working-directory: docs
-      - run: npm run docs:build
+        run: npm ci
+
+      - name: Build documentation
         working-directory: docs
+        run: npm run docs:build
+
       - uses: actions/upload-pages-artifact@v5
         with:
           path: docs/.vitepress/dist
 
-  deploy:
+  deploy-docs:
+    name: Deploy documentation
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build-docs
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    needs: build
-    runs-on: ubuntu-latest
     steps:
       - id: deployment
         uses: actions/deploy-pages@v5
