@@ -3,7 +3,8 @@ import Foundation
 /// Accessibility labels, descriptions, and VoiceOver announcements for the
 /// canvas, mirroring React Flow's `ariaLabelConfig`.
 ///
-/// Every default is localized from SwiftFlow's string catalog. To use your
+/// Every default is localized from SwiftFlow's `Localizable.strings` and
+/// `Localizable.stringsdict` (plural rules) resources. To use your
 /// own wording or translations, pass strings (for example from
 /// `String(localized:)`) or message closures:
 ///

@@ -322,7 +322,7 @@ SwiftFlow(nodes: nodes, edges: edges, ...,
 
 While VoiceOver runs, the canvas announces selection changes (debounced, so a selection box announces once it settles) and new connections or reconnections. Turn them off with `announceSelectionChanges` / `announceConnectionEvents`.
 
-All default labels and messages come from SwiftFlow's string catalog (`Sources/SwiftFlow/Resources/Localizable.xcstrings`, English with plural rules), so translations can be added to the package. To use your own wording or your app's translations, pass strings or message closures:
+All default labels and messages come from SwiftFlow's localized resources (`Sources/SwiftFlow/Resources/en.lproj/Localizable.strings` and `Localizable.stringsdict` for plural rules), so translations can be added to the package as further `.lproj` folders. Legacy `.strings` files are used instead of a String Catalog because SwiftPM's command-line build in Swift 6.1 (the package minimum) copies `.xcstrings` files without compiling them. To use your own wording or your app's translations, pass strings or message closures:
 
 ```swift
 AccessibilityConfig(

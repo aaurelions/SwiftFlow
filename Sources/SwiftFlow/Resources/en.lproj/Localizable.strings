@@ -1,0 +1,56 @@
+/* SwiftFlow default accessibility strings (English).
+   Plural strings live in Localizable.stringsdict. */
+
+/* Edge label: role, source node ID, target node ID */
+"%@ from %@ to %@" = "%1$@ from %2$@ to %3$@";
+
+/* Announcement after connecting two nodes; arguments are node IDs */
+"Connected %@ to %@" = "Connected %1$@ to %2$@";
+
+/* VoiceOver hint of a connection handle */
+"Drag to create a connection" = "Drag to create a connection";
+
+/* Fit-view button label */
+"Fit view" = "Fit view";
+
+/* Label of the controls panel */
+"Graph controls" = "Graph controls";
+
+/* VoiceOver role of an edge */
+"Graph edge" = "Graph edge";
+
+/* Label of the minimap */
+"Graph minimap" = "Graph minimap";
+
+/* VoiceOver role of a node */
+"Graph node" = "Graph node";
+
+/* Target handle label */
+"Input handle %@" = "Input handle %@";
+
+/* VoiceOver hint of a node when keyboard interaction is disabled */
+"Node" = "Node";
+
+/* Source handle label */
+"Output handle %@" = "Output handle %@";
+
+/* VoiceOver hint of an edge */
+"Press Enter to select" = "Press Enter to select";
+
+/* VoiceOver hint of a node */
+"Press Enter to select, drag to move" = "Press Enter to select, drag to move";
+
+/* Label of the zoom level button */
+"Reset zoom to 100 percent" = "Reset zoom to 100 percent";
+
+/* Announcement when nothing is selected anymore */
+"Selection cleared" = "Selection cleared";
+
+/* Interactivity lock button label */
+"Toggle interactivity" = "Toggle interactivity";
+
+/* Zoom-in button label */
+"Zoom in" = "Zoom in";
+
+/* Zoom-out button label */
+"Zoom out" = "Zoom out";
