@@ -18,9 +18,12 @@ SwiftFlow(
 While attached, the canvas mirrors its state into the instance (`viewport`, `viewSize`, `nodeSizes`), and every viewport command issued through the instance — `setViewport`, `fitView`, `setCenter`, `zoomTo`, `reset` — is applied to the canvas view immediately. This makes the instance a reliable single source of truth for imperative viewport control, including restore-on-load flows:
 
 ```swift
-.onInit {
-    instance.setViewport(savedViewport ?? .identity, animated: false)
-}
+SwiftFlow(nodes: nodes, edges: edges, ...,
+    onInit: {
+        instance.setViewport(savedViewport ?? .identity, animated: false)
+    },
+    swiftFlowInstance: instance
+) { node in ... }
 ```
 
 ## Fit View
@@ -28,7 +31,7 @@ While attached, the canvas mirrors its state into the instance (`viewport`, `vie
 Adjust the viewport to show all (or specific) nodes:
 
 ```swift
-// Fit all visible nodes
+// Fit all visible nodes (parent-relative child positions are resolved)
 instance.fitView(nodes: nodes, nodeSizes: instance.nodeSizes)
 
 // Fit specific nodes
@@ -55,10 +58,10 @@ instance.fitView(nodes: nodes, nodeSizes: instance.nodeSizes, options: options)
 ## Zoom Control
 
 ```swift
-// Zoom in by 25%
+// Zoom in by a factor of 1.2
 instance.zoomIn()
 
-// Zoom out by 25%
+// Zoom out by a factor of 1.2
 instance.zoomOut()
 
 // Set exact zoom level (preserves center)
@@ -129,6 +132,8 @@ let bounds = instance.getNodesBounds(nodes: nodes, nodeSizes: instance.nodeSizes
 // bounds is a CGRect: (x, y, width, height)
 ```
 
+Parent-relative child positions are resolved to absolute positions. Nodes that have not been measured use their explicit `width`/`height`, or 150×50.
+
 Compute the optimal viewport for given bounds:
 
 ```swift
@@ -187,7 +192,7 @@ SwiftFlow(nodes: nodes, edges: edges, ...,
 
 ## Auto-Fit on Load
 
-Use the `fitView` parameter on `SwiftFlow` to auto-fit all nodes on first render:
+Use the `fitView` parameter on `SwiftFlow` to auto-fit all nodes once, as soon as the canvas has a size and all visible nodes are measured (there is no fixed delay). The `Controls` fit button uses the same `fitViewOptions`:
 
 ```swift
 SwiftFlow(nodes: nodes, edges: edges, ...,

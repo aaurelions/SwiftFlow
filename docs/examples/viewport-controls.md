@@ -23,11 +23,11 @@ struct ViewportControlsExample: View {
         Node(id: "5", position: XYPosition(x: 100, y: 100), data: VPNodeData(label: "Center")),
     ]
 
-    @State var edges: [Edge<EmptyEdgeData>] = [
-        Edge(id: "e1", source: "5", target: "1", type: .bezier, markerEnd: .arrowClosed),
-        Edge(id: "e2", source: "5", target: "2", type: .bezier, markerEnd: .arrowClosed),
-        Edge(id: "e3", source: "5", target: "3", type: .bezier, markerEnd: .arrowClosed),
-        Edge(id: "e4", source: "5", target: "4", type: .bezier, markerEnd: .arrowClosed),
+    @State var edges: [FlowEdge<EmptyEdgeData>] = [
+        FlowEdge(id: "e1", source: "5", target: "1", type: .bezier, markerEnd: .arrowClosed),
+        FlowEdge(id: "e2", source: "5", target: "2", type: .bezier, markerEnd: .arrowClosed),
+        FlowEdge(id: "e3", source: "5", target: "3", type: .bezier, markerEnd: .arrowClosed),
+        FlowEdge(id: "e4", source: "5", target: "4", type: .bezier, markerEnd: .arrowClosed),
     ]
 
     @StateObject var instance = SwiftFlowInstance()

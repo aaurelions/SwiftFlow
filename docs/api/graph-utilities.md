@@ -39,14 +39,14 @@ let successors = getOutgoers(node: myNode, nodes: nodes, edges: edges)
 
 ```swift
 // For a single node
-public func getConnectedEdges<EdgeData>(
-    node: Any,
+public func getConnectedEdges<NodeData: Equatable & Sendable, EdgeData: Equatable & Sendable & Hashable>(
+    node: Node<NodeData>,
     edges: [Edge<EdgeData>]
 ) -> [Edge<EdgeData>]
 
 // For multiple nodes
-public func getConnectedEdges<EdgeData>(
-    nodes: [Any],
+public func getConnectedEdges<NodeData: Equatable & Sendable, EdgeData: Equatable & Sendable & Hashable>(
+    nodes: [Node<NodeData>],
     edges: [Edge<EdgeData>]
 ) -> [Edge<EdgeData>]
 ```
@@ -67,18 +67,20 @@ let allConnected = getConnectedEdges(nodes: selectedNodes, edges: edges)
 ```swift
 public func getIntersectingNodes<NodeData: Equatable & Sendable>(
     node: Node<NodeData>,
-    nodes: [Node<NodeData>]
+    nodes: [Node<NodeData>],
+    nodeSizes: [String: CGSize] = [:]
 ) -> [Node<NodeData>]
 ```
 
-Returns nodes whose bounding rectangles overlap with the given node.
+Returns visible nodes whose bounding rectangles overlap with the given node. Absolute positions are used (child positions are resolved relative to their parent). Unmeasured nodes use their explicit `width`/`height`, or 150×50.
 
 ### isNodeIntersecting
 
 ```swift
 public func isNodeIntersecting<NodeData: Equatable & Sendable>(
     node: Node<NodeData>,
-    otherNode: Node<NodeData>
+    otherNode: Node<NodeData>,
+    nodeSizes: [String: CGSize] = [:]
 ) -> Bool
 ```
 
@@ -88,69 +90,43 @@ Returns `true` if the two nodes' bounding rectangles overlap.
 
 ## Edge Path Functions
 
-### Simple Variants
-
-These return a `Path` for simple coordinate-based edge rendering:
-
-```swift
-// Cubic bezier curve
-func getBezierPath(
-    sourceX: CGFloat, sourceY: CGFloat,
-    targetX: CGFloat, targetY: CGFloat
-) -> Path
-
-// Quadratic bezier curve
-func getSimpleBezierPath(
-    sourceX: CGFloat, sourceY: CGFloat,
-    targetX: CGFloat, targetY: CGFloat
-) -> Path
-
-// Straight line
-func getStraightPath(
-    sourceX: CGFloat, sourceY: CGFloat,
-    targetX: CGFloat, targetY: CGFloat
-) -> Path
-
-// Right-angle steps (sharp corners)
-func getStepPath(
-    sourceX: CGFloat, sourceY: CGFloat,
-    targetX: CGFloat, targetY: CGFloat
-) -> Path
-
-// Right-angle steps (rounded corners)
-func getSmoothStepPath(
-    sourceX: CGFloat, sourceY: CGFloat,
-    targetX: CGFloat, targetY: CGFloat
-) -> Path
-```
+The edge path functions port React Flow's algorithms exactly.
 
 ### Position-Aware Variants
 
-These accept `sourcePosition` and `targetPosition` (the `Position` type: `.top`, `.bottom`, `.left`, `.right`) and return a tuple with the label position:
+These accept `sourcePosition` and `targetPosition` (the `Position` type: `.top`, `.bottom`, `.left`, `.right`, the node side of each handle) and return a tuple like React Flow: the path, the label position, and the offsets from the source/target to the label position:
 
 ```swift
 func getBezierPath(
-    sourceX: CGFloat, sourceY: CGFloat,
-    sourcePosition: Position,
-    targetX: CGFloat, targetY: CGFloat,
-    targetPosition: Position,
+    sourceX: CGFloat, sourceY: CGFloat, sourcePosition: Position,
+    targetX: CGFloat, targetY: CGFloat, targetPosition: Position,
     curvature: CGFloat = 0.25
-) -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetSourceX: CGFloat, offsetSourceY: CGFloat)
+) -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetX: CGFloat, offsetY: CGFloat)
 
 func getSimpleBezierPath(
-    sourceX: CGFloat, sourceY: CGFloat,
-    sourcePosition: Position,
-    targetX: CGFloat, targetY: CGFloat,
-    targetPosition: Position
-) -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetSourceX: CGFloat, offsetSourceY: CGFloat)
+    sourceX: CGFloat, sourceY: CGFloat, sourcePosition: Position,
+    targetX: CGFloat, targetY: CGFloat, targetPosition: Position
+) -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetX: CGFloat, offsetY: CGFloat)
 
 func getSmoothStepPath(
-    sourceX: CGFloat, sourceY: CGFloat,
-    sourcePosition: Position,
-    targetX: CGFloat, targetY: CGFloat,
-    targetPosition: Position
-) -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetSourceX: CGFloat, offsetSourceY: CGFloat)
+    sourceX: CGFloat, sourceY: CGFloat, sourcePosition: Position,
+    targetX: CGFloat, targetY: CGFloat, targetPosition: Position,
+    borderRadius: CGFloat = 5,
+    centerX: CGFloat? = nil,
+    centerY: CGFloat? = nil,
+    offset: CGFloat = 20
+) -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetX: CGFloat, offsetY: CGFloat)
+
+// Equivalent to getSmoothStepPath with borderRadius: 0
+func getStepPath(
+    sourceX: CGFloat, sourceY: CGFloat, sourcePosition: Position,
+    targetX: CGFloat, targetY: CGFloat, targetPosition: Position
+) -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetX: CGFloat, offsetY: CGFloat)
 ```
+
+- `getBezierPath`: the control offset is `0.5 * distance` along the handle axis, or `curvature * 25 * sqrt(-distance)` when the target lies behind the source handle.
+- `getSimpleBezierPath`: a cubic curve with its control points at the axis midpoint.
+- `getSmoothStepPath`: uses React Flow's routing for every combination of handle sides.
 
 ### Dispatcher
 
@@ -158,22 +134,35 @@ func getSmoothStepPath(
 // Generic dispatcher by EdgeType
 func getEdgePath(
     type: EdgeType,
-    sourceX: CGFloat, sourceY: CGFloat,
-    targetX: CGFloat, targetY: CGFloat
+    sourceX: CGFloat, sourceY: CGFloat, sourcePosition: Position,
+    targetX: CGFloat, targetY: CGFloat, targetPosition: Position
+) -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetX: CGFloat, offsetY: CGFloat)
+```
+
+For `.straight` the label is at the center of the line and the offsets are `abs(delta) / 2`.
+
+### Overloads Without Positions
+
+These assume the source handle is on the **right** and the target handle on the **left**, and return only a `Path` (or the noted type):
+
+```swift
+func getBezierPath(sourceX: CGFloat, sourceY: CGFloat, targetX: CGFloat, targetY: CGFloat) -> Path
+func getSimpleBezierPath(sourceX: CGFloat, sourceY: CGFloat, targetX: CGFloat, targetY: CGFloat) -> Path
+func getStraightPath(sourceX: CGFloat, sourceY: CGFloat, targetX: CGFloat, targetY: CGFloat) -> Path
+func getStepPath(sourceX: CGFloat, sourceY: CGFloat, targetX: CGFloat, targetY: CGFloat) -> Path
+func getSmoothStepPath(
+    sourceX: CGFloat, sourceY: CGFloat, targetX: CGFloat, targetY: CGFloat,
+    borderRadius: CGFloat = 5
 ) -> Path
+
+func getEdgePath(type: EdgeType, sourceX: CGFloat, sourceY: CGFloat, targetX: CGFloat, targetY: CGFloat) -> Path
+func getEdgePathResult(type: EdgeType, sourceX: CGFloat, sourceY: CGFloat, targetX: CGFloat, targetY: CGFloat) -> EdgePathResult
+func getEdgeMidpoint(type: EdgeType, sourceX: CGFloat, sourceY: CGFloat, targetX: CGFloat, targetY: CGFloat) -> CGPoint
 ```
 
 ### Full Result (EdgePathResult)
 
-```swift
-func getEdgePathResult(
-    type: EdgeType,
-    sourceX: CGFloat, sourceY: CGFloat,
-    targetX: CGFloat, targetY: CGFloat
-) -> EdgePathResult
-```
-
-Returns an `EdgePathResult` with the computed path and label positioning:
+`getEdgePathResult` returns an `EdgePathResult` with the computed path and label positioning:
 
 ```swift
 let result = getEdgePathResult(
@@ -182,13 +171,15 @@ let result = getEdgePathResult(
     targetX: 300, targetY: 20
 )
 
-// result.path  — renderable Path
-// result.labelX, result.labelY — midpoint for label
-// result.sourceX, result.sourceY — start point
-// result.targetX, result.targetY — end point
+// result.path  - renderable Path
+// result.labelX, result.labelY - midpoint for label
+// result.sourceX, result.sourceY - start point
+// result.targetX, result.targetY - end point
 ```
 
 ### Angle Functions
+
+Also assume a right-side source and a left-side target:
 
 ```swift
 // Marker rotation at target endpoint
@@ -206,6 +197,8 @@ func getEdgeAngleAtStart(
 ) -> CGFloat
 ```
 
+The canvas itself renders edges using each `Handle`'s `position`, so top/bottom handles route correctly and arrow markers follow the path ends.
+
 ---
 
 ## Geometry Functions
@@ -219,7 +212,7 @@ func getNodesBounds<NodeData: Equatable & Sendable>(
 ) -> CGRect
 ```
 
-Returns the bounding rectangle containing all visible nodes.
+Returns the bounding rectangle containing all visible nodes. Parent-relative child positions are resolved to absolute positions, and `Node.origin` is applied. Unmeasured nodes use their explicit `width`/`height`, or 150×50.
 
 ### getViewportForBounds
 
@@ -227,8 +220,9 @@ Returns the bounding rectangle containing all visible nodes.
 func getViewportForBounds(
     bounds: CGRect,
     viewportSize: CGSize,
-    padding: CGFloat = 80,
-    maxZoom: CGFloat = 1.5
+    minZoom: CGFloat = Viewport.minZoom,
+    maxZoom: CGFloat = Viewport.maxZoom,
+    padding: CGFloat = 80
 ) -> Viewport
 ```
 
@@ -243,8 +237,8 @@ instance.setViewport(optimalViewport)
 ### Type Checks
 
 ```swift
-func isNode(_ element: Any, ofType nodeDataType: Any.Type) -> Bool
-func isEdge(_ element: Any, ofType edgeDataType: Any.Type) -> Bool
+func isNode<T: Equatable & Sendable>(_ element: Any, ofType: T.Type = T.self) -> Bool
+func isEdge<EdgeData: Equatable & Sendable & Hashable>(_ element: Any, ofType: EdgeData.Type) -> Bool
 ```
 
 Runtime type checks for distinguishing nodes from edges in mixed collections.

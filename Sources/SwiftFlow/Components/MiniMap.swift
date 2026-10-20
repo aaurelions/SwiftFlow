@@ -17,6 +17,9 @@ public struct MiniMapNodeProps: Sendable {
 /// Supports click-and-drag to pan the main viewport. Place inside the
 /// `overlay` ViewBuilder of `SwiftFlow`.
 ///
+/// The area outside the visible viewport is covered with `maskColor`.
+/// Node colors default to the canvas theme's minimap colors.
+///
 /// ```swift
 /// // Default rendering
 /// MiniMap()
@@ -33,16 +36,22 @@ public struct MiniMapNodeProps: Sendable {
 /// ```
 public struct MiniMap<NodeContent: View>: View {
   @EnvironmentObject private var flowState: SwiftFlowState
+  @Environment(\.swiftFlowTheme) private var theme
+  @Environment(\.swiftFlowAccessibilityConfig) private var accessibilityConfig
 
   @State private var dragLayout: MiniMapLayout?
   @State private var zoomStart: CGFloat?
 
-  public var nodeColor: Color
+  /// Fill for unselected nodes. `nil` uses the theme's `minimapNodeColor`.
+  public var nodeColor: Color?
+  /// Returns the fill for a node, overriding `nodeColor` and `selectedNodeColor`.
   public var nodeColorMapper: ((MiniMapNodeProps) -> Color)?
-  public var selectedNodeColor: Color
+  /// Fill for selected nodes. `nil` uses the theme's `minimapSelectedNodeColor`.
+  public var selectedNodeColor: Color?
   public var nodeStrokeColor: Color
   public var nodeStrokeWidth: CGFloat
   public var nodeBorderRadius: CGFloat
+  /// Color covering the area outside the visible viewport.
   public var maskColor: Color
   public var width: CGFloat
   public var height: CGFloat
@@ -53,9 +62,9 @@ public struct MiniMap<NodeContent: View>: View {
 
   /// Creates a MiniMap with custom node rendering.
   public init(
-    nodeColor: Color = .gray.opacity(0.5),
+    nodeColor: Color? = nil,
     nodeColorMapper: ((MiniMapNodeProps) -> Color)? = nil,
-    selectedNodeColor: Color = .blue,
+    selectedNodeColor: Color? = nil,
     nodeStrokeColor: Color = .clear,
     nodeStrokeWidth: CGFloat = 0,
     nodeBorderRadius: CGFloat = 1,
@@ -86,7 +95,7 @@ public struct MiniMap<NodeContent: View>: View {
 
   private func nodeProps(for node: AnyNodeSnapshot) -> MiniMapNodeProps {
     let absPos = flowState.absolutePositions[node.id] ?? XYPosition(x: node.x, y: node.y)
-    let size = flowState.nodeSizes[node.id] ?? CGSize(width: 100, height: 50)
+    let size = flowState.nodeSizes[node.id] ?? defaultNodeSize
     return MiniMapNodeProps(
       id: node.id, x: absPos.x, y: absPos.y,
       width: size.width, height: size.height,
@@ -107,7 +116,8 @@ public struct MiniMap<NodeContent: View>: View {
       let props = nodeProps(for: node)
       return CGRect(x: props.x, y: props.y, width: props.width, height: props.height)
     }
-    return MiniMapLayout(nodeRects: rects, viewport: flowState.viewport,
+    return MiniMapLayout(
+      nodeRects: rects, viewport: flowState.viewport,
       viewSize: flowState.viewSize, mapSize: CGSize(width: width, height: height), padding: pad)
   }
 
@@ -121,22 +131,24 @@ public struct MiniMap<NodeContent: View>: View {
 
     ZStack(alignment: .topLeading) {
       RoundedRectangle(cornerRadius: 6)
-        .fill(maskColor.opacity(0.9))
-        .overlay(
-          RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.2), lineWidth: 1))
+        .fill(.ultraThinMaterial)
+        .opacity(theme.minimapBackgroundOpacity)
 
       edgesLayer(scale: s, bounds: b)
       nodesLayer(scale: s, bounds: b)
       viewportIndicator(scale: s, bounds: b)
+
+      RoundedRectangle(cornerRadius: 6).stroke(Color.gray.opacity(0.2), lineWidth: 1)
     }
     .frame(width: max(width, 1), height: max(height, 1))
     .clipShape(RoundedRectangle(cornerRadius: 6))
     .contentShape(Rectangle())
     .gesture(pannable && flowState.isInteractive ? minimapDragGesture(layout: currentLayout) : nil)
     .simultaneousGesture(zoomable && flowState.isInteractive ? minimapZoomGesture : nil)
-    .accessibilityLabel("Flow overview")
+    .accessibilityElement()
+    .accessibilityLabel(accessibilityConfig.minimapAriaLabel)
     .padding(12)
-    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: panelAlignment)
+    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.alignment)
   }
 
   // MARK: - Subviews
@@ -161,7 +173,9 @@ public struct MiniMap<NodeContent: View>: View {
           if let mapper = nodeColorMapper {
             mapper(props)
           } else {
-            node.selected ? selectedNodeColor : nodeColor
+            node.selected
+              ? (selectedNodeColor ?? theme.minimapSelectedNodeColor)
+              : (nodeColor ?? theme.minimapNodeColor)
           }
 
         RoundedRectangle(cornerRadius: nodeBorderRadius)
@@ -191,8 +205,8 @@ public struct MiniMap<NodeContent: View>: View {
     else { return nil }
     let sP = flowState.absolutePositions[sNode.id] ?? XYPosition(x: sNode.x, y: sNode.y)
     let tP = flowState.absolutePositions[tNode.id] ?? XYPosition(x: tNode.x, y: tNode.y)
-    let sS = flowState.nodeSizes[sNode.id] ?? CGSize(width: 100, height: 50)
-    let tS = flowState.nodeSizes[tNode.id] ?? CGSize(width: 100, height: 50)
+    let sS = flowState.nodeSizes[sNode.id] ?? defaultNodeSize
+    let tS = flowState.nodeSizes[tNode.id] ?? defaultNodeSize
     var p = Path()
     p.move(
       to: CGPoint(
@@ -226,10 +240,22 @@ public struct MiniMap<NodeContent: View>: View {
     let vpW = (flowState.viewSize.width / zoom) * s
     let vpH = (flowState.viewSize.height / zoom) * s
 
-    return RoundedRectangle(cornerRadius: 2)
-      .stroke(Color.blue.opacity(0.6), lineWidth: 1.5)
-      .frame(width: max(vpW, 1), height: max(vpH, 1))
-      .offset(x: vpX, y: vpY)
+    let viewportRect = CGRect(x: vpX, y: vpY, width: max(vpW, 1), height: max(vpH, 1))
+    let mapRect = CGRect(x: 0, y: 0, width: max(width, 1), height: max(height, 1))
+
+    return ZStack(alignment: .topLeading) {
+      // Mask everything outside the visible viewport.
+      Path { path in
+        path.addRect(mapRect)
+        path.addRect(viewportRect)
+      }
+      .fill(maskColor, style: FillStyle(eoFill: true))
+
+      RoundedRectangle(cornerRadius: 2)
+        .stroke(theme.minimapSelectedNodeColor.opacity(0.6), lineWidth: 1.5)
+        .frame(width: viewportRect.width, height: viewportRect.height)
+        .offset(x: viewportRect.minX, y: viewportRect.minY)
+    }
   }
 
   /// Continuous drag gesture for panning the viewport via the minimap.
@@ -238,11 +264,9 @@ public struct MiniMap<NodeContent: View>: View {
       .onChanged { value in
         if dragLayout == nil { dragLayout = layout }
         let point = (dragLayout ?? layout).flowPosition(at: value.location)
-        let zoom = flowState.viewport.zoom
-        flowState.setViewport(Viewport(
-          x: -point.x * zoom + flowState.viewSize.width / 2,
-          y: -point.y * zoom + flowState.viewSize.height / 2,
-          zoom: zoom), animated: false)
+        flowState.setViewport(
+          .centered(on: point, zoom: flowState.viewport.zoom, viewSize: flowState.viewSize),
+          animated: false)
       }
       .onEnded { _ in dragLayout = nil }
   }
@@ -255,20 +279,6 @@ public struct MiniMap<NodeContent: View>: View {
       }
       .onEnded { _ in zoomStart = nil }
   }
-
-  private var panelAlignment: Alignment {
-    switch position {
-    case .topLeft: return .topLeading
-    case .topCenter: return .top
-    case .topRight: return .topTrailing
-    case .centerLeft: return .leading
-    case .center: return .center
-    case .centerRight: return .trailing
-    case .bottomLeft: return .bottomLeading
-    case .bottomCenter: return .bottom
-    case .bottomRight: return .bottomTrailing
-    }
-  }
 }
 
 // MARK: - Convenience Init (no custom node content)
@@ -276,9 +286,9 @@ public struct MiniMap<NodeContent: View>: View {
 extension MiniMap where NodeContent == EmptyView {
   /// Creates a MiniMap with default (rectangle) node rendering.
   public init(
-    nodeColor: Color = .gray.opacity(0.5),
+    nodeColor: Color? = nil,
     nodeColorMapper: ((MiniMapNodeProps) -> Color)? = nil,
-    selectedNodeColor: Color = .blue,
+    selectedNodeColor: Color? = nil,
     nodeStrokeColor: Color = .clear,
     nodeStrokeWidth: CGFloat = 0,
     nodeBorderRadius: CGFloat = 1,
@@ -312,19 +322,23 @@ internal struct MiniMapLayout {
   let scale: CGFloat
   let padding: CGFloat
 
-  init(nodeRects: [CGRect], viewport: Viewport, viewSize: CGSize, mapSize: CGSize, padding: CGFloat) {
+  init(nodeRects: [CGRect], viewport: Viewport, viewSize: CGSize, mapSize: CGSize, padding: CGFloat)
+  {
     let zoom = max(viewport.zoom, Viewport.minZoom)
-    var bounds = CGRect(x: -viewport.x / zoom, y: -viewport.y / zoom,
+    var bounds = CGRect(
+      x: -viewport.x / zoom, y: -viewport.y / zoom,
       width: max(viewSize.width / zoom, 1), height: max(viewSize.height / zoom, 1))
     for rect in nodeRects { bounds = bounds.union(rect) }
     self.bounds = bounds
     self.padding = min(max(padding, 0), max(0, (min(mapSize.width, mapSize.height) - 1) / 2))
-    self.scale = min(max(1, mapSize.width - self.padding * 2) / max(bounds.width, 1),
+    self.scale = min(
+      max(1, mapSize.width - self.padding * 2) / max(bounds.width, 1),
       max(1, mapSize.height - self.padding * 2) / max(bounds.height, 1), 1)
   }
 
   func flowPosition(at point: CGPoint) -> CGPoint {
-    CGPoint(x: (point.x - padding) / scale + bounds.minX,
+    CGPoint(
+      x: (point.x - padding) / scale + bounds.minX,
       y: (point.y - padding) / scale + bounds.minY)
   }
 }

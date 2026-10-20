@@ -64,4 +64,32 @@ struct GraphUtilsTests {
     let connected = getConnectedEdges(node: node4, edges: edges)
     #expect(connected.isEmpty)
   }
+
+  // MARK: - Deletion
+
+  @Test func deletingParentRemovesDescendantsAndTheirEdges() {
+    let nodes = [
+      Node(id: "p", position: .zero, data: "P"),
+      Node(id: "c", position: .zero, data: "C", parentId: "p"),
+      Node(id: "g", position: .zero, data: "G", parentId: "c"),
+      Node(id: "x", position: .zero, data: "X"),
+    ]
+    let edges = [
+      Edge<EmptyEdgeData>(id: "cx", source: "c", target: "x"),
+      Edge<EmptyEdgeData>(id: "xx", source: "x", target: "x"),
+    ]
+    let result = elementsToDelete(nodes: nodes, edges: edges, nodeIds: ["p"], edgeIds: [])
+    #expect(Set(result.nodes.map(\.id)) == ["p", "c", "g"])
+    #expect(result.edges.map(\.id) == ["cx"])
+  }
+
+  @Test func nonDeletableChildIsKept() {
+    let nodes = [
+      Node(id: "p", position: .zero, data: "P"),
+      Node(id: "c", position: .zero, data: "C", parentId: "p", deletable: false),
+    ]
+    let edges: [Edge<EmptyEdgeData>] = []
+    let result = elementsToDelete(nodes: nodes, edges: edges, nodeIds: ["p"], edgeIds: [])
+    #expect(result.nodes.map(\.id) == ["p"])
+  }
 }

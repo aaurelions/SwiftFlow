@@ -16,7 +16,7 @@ struct LayoutNodeData: Equatable, Sendable, Codable {
 
 struct AutoLayoutExample: View {
     @State var nodes: [Node<LayoutNodeData>] = makeInitialNodes()
-    @State var edges: [Edge<EmptyEdgeData>] = makeInitialEdges()
+    @State var edges: [FlowEdge<EmptyEdgeData>] = makeInitialEdges()
     @State var activeLayout: String = "tree"
 
     var body: some View {
@@ -137,23 +137,23 @@ func makeInitialNodes() -> [Node<LayoutNodeData>] {
     ]
 }
 
-func makeInitialEdges() -> [Edge<EmptyEdgeData>] {
+func makeInitialEdges() -> [FlowEdge<EmptyEdgeData>] {
     [
-        Edge(id: "e-r-a1", source: "root", target: "a1",
+        FlowEdge(id: "e-r-a1", source: "root", target: "a1",
              markerEnd: .arrowClosed),
-        Edge(id: "e-r-a2", source: "root", target: "a2",
+        FlowEdge(id: "e-r-a2", source: "root", target: "a2",
              markerEnd: .arrowClosed),
-        Edge(id: "e-r-a3", source: "root", target: "a3",
+        FlowEdge(id: "e-r-a3", source: "root", target: "a3",
              markerEnd: .arrowClosed),
-        Edge(id: "e-a1-b1", source: "a1", target: "b1",
+        FlowEdge(id: "e-a1-b1", source: "a1", target: "b1",
              markerEnd: .arrowClosed),
-        Edge(id: "e-a1-b2", source: "a1", target: "b2",
+        FlowEdge(id: "e-a1-b2", source: "a1", target: "b2",
              markerEnd: .arrowClosed),
-        Edge(id: "e-b1-c1", source: "b1", target: "c1",
+        FlowEdge(id: "e-b1-c1", source: "b1", target: "c1",
              markerEnd: .arrowClosed),
-        Edge(id: "e-b1-c2", source: "b1", target: "c2",
+        FlowEdge(id: "e-b1-c2", source: "b1", target: "c2",
              markerEnd: .arrowClosed),
-        Edge(id: "e-b2-c3", source: "b2", target: "c3",
+        FlowEdge(id: "e-b2-c3", source: "b2", target: "c3",
              markerEnd: .arrowClosed),
     ]
 }

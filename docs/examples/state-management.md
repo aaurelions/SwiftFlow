@@ -45,22 +45,22 @@ struct StateManagementExample: View {
             ),
         ],
         edges: [
-            Edge(
+            FlowEdge(
                 id: "e-t1-t2",
                 source: "t1", target: "t2",
                 data: TaskEdgeData(dependencyType: "blocking")
             ),
-            Edge(
+            FlowEdge(
                 id: "e-t1-t3",
                 source: "t1", target: "t3",
                 data: TaskEdgeData(dependencyType: "sequential")
             ),
-            Edge(
+            FlowEdge(
                 id: "e-t2-t4",
                 source: "t2", target: "t4",
                 data: TaskEdgeData(dependencyType: "blocking")
             ),
-            Edge(
+            FlowEdge(
                 id: "e-t3-t4",
                 source: "t3", target: "t4",
                 data: TaskEdgeData(dependencyType: "blocking")

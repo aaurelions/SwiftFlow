@@ -45,8 +45,8 @@ struct GeometryUtilsTests {
       Node(id: "1", position: XYPosition(x: 0, y: 0), data: "A")
     ]
     let bounds = getNodesBounds(nodes: nodes, nodeSizes: [:])
-    #expect(bounds.width == 200)  // default width
-    #expect(bounds.height == 100)  // default height
+    #expect(bounds.width == 150)  // default width
+    #expect(bounds.height == 50)  // default height
   }
 
   @Test func viewportForBounds() {
@@ -77,11 +77,61 @@ struct GeometryUtilsTests {
   }
   @Test func fittedBoundsAreCenteredWhenZoomIsCapped() {
     let bounds = CGRect(x: -100, y: 70, width: 100, height: 50)
-    let vp = getViewportForBounds(bounds: bounds,
+    let vp = getViewportForBounds(
+      bounds: bounds,
       viewportSize: CGSize(width: 800, height: 600), maxZoom: 1.5)
     #expect(vp.zoom == 1.5)
     #expect(bounds.midX * vp.zoom + vp.x == 400)
     #expect(bounds.midY * vp.zoom + vp.y == 300)
   }
 
+  // MARK: - Absolute Positions and Origins
+
+  @Test func childBoundsAreRelativeToParent() {
+    let nodes = [
+      Node(id: "p", position: XYPosition(x: 100, y: 100), data: "P"),
+      Node(id: "c", position: XYPosition(x: 50, y: 20), data: "C", parentId: "p"),
+    ]
+    let sizes: [String: CGSize] = [
+      "p": CGSize(width: 10, height: 10), "c": CGSize(width: 10, height: 10),
+    ]
+    let bounds = getNodesBounds(nodes: nodes, nodeSizes: sizes)
+    #expect(bounds == CGRect(x: 100, y: 100, width: 60, height: 30))
+  }
+
+  @Test func nodeOriginShiftsTopLeft() {
+    let nodes = [
+      Node(id: "a", position: XYPosition(x: 100, y: 100), data: "A", origin: .center)
+    ]
+    let positions = nodeTopLeftPositions(
+      nodes: nodes, nodeSizes: ["a": CGSize(width: 40, height: 20)])
+    #expect(positions["a"] == XYPosition(x: 80, y: 90))
+  }
+
+  @Test func canvasNodeOriginAppliesToNodesWithDefaultOrigin() {
+    let nodes = [Node(id: "a", position: XYPosition(x: 100, y: 100), data: "A")]
+    let positions = nodeTopLeftPositions(
+      nodes: nodes, nodeSizes: ["a": CGSize(width: 40, height: 20)], nodeOrigin: .center)
+    #expect(positions["a"] == XYPosition(x: 80, y: 90))
+  }
+
+  @Test func cyclicParentsAreReportedAndIgnored() {
+    let nodes = [
+      Node(id: "a", position: XYPosition(x: 1, y: 0), data: "A", parentId: "b"),
+      Node(id: "b", position: XYPosition(x: 2, y: 0), data: "B", parentId: "a"),
+    ]
+    var cycles: [String] = []
+    let positions = nodeTopLeftPositions(
+      nodes: nodes, nodeSizes: [:], onCycle: { cycles.append($0) })
+    #expect(!cycles.isEmpty)
+    #expect(positions.count == 2)
+  }
+
+  @Test func explicitNodeSizeIsUsedBeforeDefault() {
+    let node = Node(id: "a", position: .zero, data: "A", width: 300, height: 120)
+    #expect(resolvedNodeSize(node, nodeSizes: [:]) == CGSize(width: 300, height: 120))
+    #expect(
+      resolvedNodeSize(node, nodeSizes: ["a": CGSize(width: 1, height: 2)])
+        == CGSize(width: 1, height: 2))
+  }
 }

@@ -32,25 +32,30 @@ SwiftFlow(nodes: nodes, edges: edges, ...) { node in
 
 ## NodeToolbar
 
-A floating toolbar that appears near a selected node.
+A floating toolbar placed next to a node. It positions itself relative to the view it overlays, so attach it as an overlay of the node view (this keeps the node's measured size unchanged):
 
 ```swift
-// Inside your node view or overlay
-if node.selected {
-    NodeToolbar(position: .top) {
-        HStack(spacing: 4) {
-            Button("Delete") { deleteNode(node.id) }
-            Button("Duplicate") { duplicateNode(node) }
-            Button("Copy") { copyNode(node) }
+MyNodeView(node: node)
+    .overlay {
+        NodeToolbar(isVisible: node.selected, position: .top) {
+            HStack(spacing: 4) {
+                Button("Delete") { deleteNode(node.id) }
+                Button("Duplicate") { duplicateNode(node) }
+            }
         }
-        .padding(6)
-        .background(.ultraThinMaterial)
-        .cornerRadius(6)
     }
-}
 ```
 
-The toolbar is positioned relative to the node and rendered above the graph content.
+### Parameters
+
+| Parameter   | Type              | Default   | Description                                              |
+| ----------- | ----------------- | --------- | -------------------------------------------------------- |
+| `nodeId`    | `String?`         | `nil`     | The owning node (informational)                          |
+| `isVisible` | `Bool`            | `true`    | Whether the toolbar is shown                             |
+| `position`  | `ToolbarPosition` | `.top`    | Node side: `.top`, `.bottom`, `.left`, `.right`          |
+| `align`     | `ToolbarAlign`    | `.center` | Alignment along that side: `.start`, `.center`, `.end`   |
+| `offset`    | `CGFloat`         | `10`      | Gap in points between node and toolbar (React Flow default) |
+| `content`   | ViewBuilder       | -         | Toolbar content (material background is added)           |
 
 ---
 
@@ -82,7 +87,7 @@ EdgeToolbar(isVisible: edge.selected, position: CGPoint(x: midX, y: midY)) {
 
 ## NodeResizer
 
-Add resize handles to a node. Supports 8-directional resize with configurable constraints.
+Renders **one** resize handle at `direction` (one of 8 directions) with configurable constraints. `NodeResizer` is a thin wrapper around `NodeResizeControl`; use several instances for several handles.
 
 ```swift
 NodeResizer(
@@ -91,13 +96,14 @@ NodeResizer(
     minWidth: 100,
     maxWidth: 500,
     minHeight: 50,
-    maxHeight: 400
-) { width, height in
-    onNodesChange?([.dimensions(id: node.id, width: width, height: height)])
-}
+    maxHeight: 400,
+    onResize: { width, height in print("Resized to \(width) × \(height)") }
+)
 ```
 
-For a single resize handle with more control:
+Like React Flow's resizer, a resize control inside a canvas updates the node itself: it sends `.dimensions` changes, plus `.position` changes for handles on the top or left side, through `onNodesChange`, so the edge opposite the handle stays in place (also for nodes with a non-default `origin`). `onResize` is an optional notification; `shouldResize` can veto a step.
+
+`NodeResizeControl` takes `position:` instead of `direction:` and additionally supports `handleSize` and `isVisible`:
 
 ```swift
 NodeResizeControl(
@@ -107,9 +113,7 @@ NodeResizeControl(
     maxWidth: 500,
     minHeight: 50,
     maxHeight: 400
-) { width, height in
-    onNodesChange?([.dimensions(id: node.id, width: width, height: height)])
-}
+)
 ```
 
 ---

@@ -71,7 +71,7 @@ store.onEdgesChange([.remove(id: "edge-1")])
 public func onConnect(_ connection: Connection, defaults: DefaultEdgeOptions? = nil)
 ```
 
-Creates a new edge from a `Connection` and adds it to the edge array. Prevents duplicates.
+Creates a new edge from a `Connection` and adds it to the edge array. Uses the React Flow id format `xy-edge__{source}{sourceHandle}-{target}{targetHandle}` and prevents duplicates (`nil` and `""` handles are equal).
 
 ```swift
 onConnect: { connection in
@@ -177,7 +177,7 @@ public func deleteElements(
 ) -> (nodes: [Node<NodeData>], edges: [Edge<EdgeData>])
 ```
 
-Deletes nodes and edges by ID, respecting `deletable` for explicitly requested elements. Deleting a node also removes all of its incident edges, including protected edges whose endpoint no longer exists. Returns all deleted elements for undo/redo support.
+Deletes nodes and edges by ID, respecting `deletable` for explicitly requested elements. Deletable nodes are removed together with their deletable descendants (the `parentId` chain) and all connected edges (React Flow `getElementsToRemove`). Returns all deleted elements for undo/redo support.
 
 ```swift
 let deleted = store.deleteElements(nodeIds: ["node-1"], edgeIds: ["edge-1"])
@@ -271,8 +271,8 @@ struct CustomOverlay: View {
 
 | Method                        | Description                               |
 | ----------------------------- | ----------------------------------------- |
-| `zoomIn()`                    | Zoom in by 25%                            |
-| `zoomOut()`                   | Zoom out by 25%                           |
+| `zoomIn()`                    | Zoom in by a factor of 1.2                |
+| `zoomOut()`                   | Zoom out by a factor of 1.2               |
 | `zoomTo(_:)`                  | Set exact zoom level                      |
 | `fitView()`                   | Fit all nodes into viewport               |
 | `setViewport(_:animated:)`    | Set viewport directly                     |

@@ -126,7 +126,7 @@ public struct SwiftFlowDocument<NodeData: Codable, EdgeData: Codable> {
 ```swift
 struct FlowEditor: View {
     @State var nodes: [Node<MyNodeData>] = [...]
-    @State var edges: [Edge<MyEdgeData>] = [...]
+    @State var edges: [FlowEdge<MyEdgeData>] = [...]
     @State var viewport: Viewport = .identity
 
     var body: some View {

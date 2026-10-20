@@ -49,10 +49,10 @@ SwiftFlow(
 | `elementsSelectable`  | `Bool`            | `true`      | Enable node and edge selection                        |
 | `panOnDrag`           | `Bool`            | `true`      | Pan canvas on empty-space drag                        |
 | `panOnScroll`         | `Bool`            | `false`     | Pan on scroll (macOS) instead of zoom                 |
-| `panOnScrollMode`     | `PanOnScrollMode` | `.free`     | `.free`, `.vertical`, or `.horizontal`                |
+| `panOnScrollMode`     | `PanOnScrollMode` | `.free`     | `.free`, `.vertical`, or `.horizontal`; restricts scroll panning only (drag panning is free) |
 | `zoomOnScroll`        | `Bool`            | `true`      | Zoom with scroll wheel (macOS)                        |
 | `zoomOnPinch`         | `Bool`            | `true`      | Zoom with pinch gesture (iOS)                         |
-| `zoomOnDoubleClick`   | `Bool`            | `true`      | Fit-to-content on double-click of empty space         |
+| `zoomOnDoubleClick`   | `Bool`            | `true`      | Double-tapping the pane zooms in by a factor of 2 around the view center |
 | `selectionOnDrag`     | `Bool`            | `false`     | Draw selection box on drag (instead of panning)       |
 | `selectNodesOnDrag`   | `Bool`            | `true`      | Auto-select a node when dragging it                   |
 | `selectionMode`       | `SelectionMode`   | `.partial`  | `.partial` or `.full` containment for selection box   |
@@ -69,18 +69,18 @@ SwiftFlow(
 | `theme`            | `SwiftFlowTheme`   | `.default`     | Visual theme                                    |
 | `colorMode`        | `ColorMode`        | `.system`      | `.light`, `.dark`, or `.system`                 |
 | `zIndexMode`       | `ZIndexMode`       | `.auto`        | `.auto`, `.basic`, or `.manual`                 |
-| `nodeOrigin`       | `NodeOrigin`       | `.topLeft`     | `.topLeft` or `.center`                         |
+| `nodeOrigin`       | `NodeOrigin`       | `.topLeft`     | Node anchor: node top-left = `position - origin * size`. `Node.origin` wins when it is not `.topLeft` |
 
 ## Constraint Parameters
 
 | Parameter            | Type                 | Default       | Description                                         |
 | -------------------- | -------------------- | ------------- | --------------------------------------------------- |
 | `coordinateExtent`   | `CoordinateExtent`   | `.infinite`   | Boundary constraints for node dragging              |
-| `fitView`            | `Bool`               | `false`       | Auto-fit all nodes into viewport on load            |
+| `fitView`            | `Bool`               | `false`       | Fit once when the canvas has a size and all visible nodes are measured (no fixed delay) |
 | `fitViewOptions`     | `FitViewOptions?`    | `nil`         | Configuration for fit-view behavior; `padding`, `nodeIds`, and `includeHiddenNodes` are honored when auto-fitting on load |
-| `defaultEdgeOptions` | `DefaultEdgeOptions?`| `nil`         | Default properties applied to newly created edges   |
+| `defaultEdgeOptions` | `DefaultEdgeOptions?`| `nil`         | Defaults applied when rendering edges: a default fills a property only while the edge still has its initializer default (`type == .default`, `animated == false`, `markerStart`/`markerEnd == nil`) |
 | `keyboardShortcuts`  | `KeyboardShortcuts`  | `.default`    | Keyboard shortcut key codes and nudge distances     |
-| `accessibilityConfig`| `AccessibilityConfig`| `.default`    | VoiceOver and accessibility configuration           |
+| `accessibilityConfig`| `AccessibilityConfig`| `.default`    | Localized labels, hints, and VoiceOver announcements for nodes, edges, handles, Controls and the MiniMap |
 
 ## Convenience Initializer (No Overlay)
 
@@ -104,6 +104,22 @@ SwiftFlow(
 When `true` (default), dragging on empty canvas space pans the viewport. Hold **Shift** to draw a selection box instead.
 
 When `selectionOnDrag` is `true`, the roles reverse: dragging creates a selection box, and **Shift+drag** pans.
+
+### Selection
+
+Tapping a node selects it and deselects all other nodes and edges (the same for edges). Holding **Command** (macOS) toggles the tapped element for multi-selection. `onNodeClick`, `onEdgeClick` and `onPaneClick` fire even when selection is disabled. Edge double-click only calls `onEdgeDoubleClick`; it does not delete the edge.
+
+### Node Appearance
+
+The canvas applies `Node.style` (background, falling back to `theme.nodeBackgroundColor`; border color/width; `borderRadius`; `opacity`). Selected nodes get an outline using `theme.nodeSelectedBorderColor` / `nodeSelectedBorderWidth` (set `nodeSelectedBorderWidth = 0` if your node views draw their own selection). Child positions are relative to the parent's top-left.
+
+### Edge Rendering
+
+Edges are drawn from each `Handle`'s `position` (node side), so top/bottom handles route correctly and markers follow the path ends. An edge with a `nil` `sourceHandle`/`targetHandle` attaches to the first handle of that type on the node; if the node has no rendered handle, it attaches to the center of the side given by `Node.sourcePosition`/`targetPosition` (defaults right/left). `Edge.interactionWidth` sets the hit area width and `EdgeStyle.opacity` is applied.
+
+### Reconnection
+
+Pass `onReconnect` and mark edges `reconnectable`. Endpoint anchors appear on a selected reconnectable edge when `nodesConnectable` is on. On a valid drop `onReconnect(oldEdge, newConnection)` is called with the original edge; apply it with `edges = reconnectEdge(oldEdge, connection, edges)`. Dropping elsewhere leaves the edge unchanged, and `onConnect` is not used as a fallback.
 
 ### Zoom Constraints
 
@@ -183,8 +199,8 @@ Button("Fit View") {
 
 | Mode      | Description                                                       |
 | --------- | ----------------------------------------------------------------- |
-| `.auto`   | Selected items come to front; sub-flows managed automatically     |
-| `.basic`  | Selected items come to front only                                 |
-| `.manual` | No automatic z-indexing; values are entirely user-controlled      |
+| `.auto`   | Selected nodes come to front                                      |
+| `.basic`  | Selected nodes come to front                                      |
+| `.manual` | Only `zIndex` is used; selection does not raise nodes             |
 
 Use `.manual` when you need complete control over render order via the `zIndex` property on each node and edge.

@@ -1,5 +1,9 @@
 import SwiftUI
 
+/// RGBA storage used to encode SwiftUI `Color` values in `NodeStyle` and `EdgeStyle`.
+///
+/// Components are stored in the sRGB color space, the space used by
+/// `Color(red:green:blue:opacity:)` when decoding.
 struct CodableColor: Codable, Equatable, Sendable, Hashable {
   var red: Double
   var green: Double
@@ -31,7 +35,7 @@ struct CodableColor: Codable, Equatable, Sendable, Hashable {
       }
     #elseif canImport(AppKit)
       let platformColor = NSColor(color)
-      guard let rgbColor = platformColor.usingColorSpace(.deviceRGB) else {
+      guard let rgbColor = platformColor.usingColorSpace(.sRGB) else {
         throw EncodingError.invalidValue(
           color,
           EncodingError.Context(

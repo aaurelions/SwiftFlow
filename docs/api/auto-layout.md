@@ -117,7 +117,7 @@ Nodes are placed in row-major order. Best for graphs without strong hierarchical
 ```swift
 struct FlowEditor: View {
     @State var nodes: [Node<String>] = [...]
-    @State var edges: [Edge<EmptyEdgeData>] = [...]
+    @State var edges: [FlowEdge<EmptyEdgeData>] = [...]
 
     var body: some View {
         VStack {

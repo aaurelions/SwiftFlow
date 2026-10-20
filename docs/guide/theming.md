@@ -13,7 +13,7 @@ SwiftFlow(nodes: nodes, edges: edges, ..., theme: .default) { ... }
 // Dark theme
 SwiftFlow(nodes: nodes, edges: edges, ..., theme: .dark) { ... }
 
-// Explicit light theme
+// Explicit light theme (identical to .default)
 SwiftFlow(nodes: nodes, edges: edges, ..., theme: .light) { ... }
 ```
 
@@ -81,17 +81,19 @@ SwiftFlow(nodes: nodes, edges: edges, ..., theme: theme) { ... }
 
 | Property                  | Type     | Default          | Description                  |
 | ------------------------- | -------- | ---------------- | ---------------------------- |
-| `nodeBackgroundColor`     | `Color`  | `.white`         | Default node background      |
-| `nodeSelectedBorderColor` | `Color`  | `.blue`          | Selected node border color   |
-| `nodeSelectedBorderWidth` | `CGFloat`| `2`              | Selected node border width   |
+| `nodeBackgroundColor`     | `Color`  | `.white`         | Node background when `Node.style` has no `backgroundColor` |
+| `nodeSelectedBorderColor` | `Color`  | `.blue`          | Selected node outline color  |
+| `nodeSelectedBorderWidth` | `CGFloat`| `2`              | Selected node outline width (set to `0` if your node views draw their own selection) |
 
 ### Handles
 
 | Property            | Type     | Default  | Description            |
 | ------------------- | -------- | -------- | ---------------------- |
-| `handleColor`       | `Color`  | `.gray`  | Handle fill color      |
+| `handleColor`       | `Color`  | `.gray`  | Handle fill color (used when `Handle(color:)` is `nil`) |
 | `handleBorderColor` | `Color`  | `.white` | Handle border color    |
 | `handleSize`        | `CGFloat`| `12`     | Handle diameter        |
+
+`Handle`, `MiniMap` and the canvas read these values from the theme unless you pass explicit overrides.
 
 ### Selection
 
@@ -113,8 +115,8 @@ SwiftFlow(nodes: nodes, edges: edges, ..., theme: theme) { ... }
 | Property                  | Type     | Default              | Description                 |
 | ------------------------- | -------- | -------------------- | --------------------------- |
 | `minimapBackgroundOpacity`| `CGFloat`| `0.9`                | Minimap background opacity  |
-| `minimapNodeColor`        | `Color`  | `.gray.opacity(0.5)` | Default node color in minimap |
-| `minimapSelectedNodeColor`| `Color`  | `.blue`              | Selected node color in minimap |
+| `minimapNodeColor`        | `Color`  | `.gray.opacity(0.5)` | Node color in minimap (used when `MiniMap(nodeColor:)` is `nil`) |
+| `minimapSelectedNodeColor`| `Color`  | `.blue`              | Selected node color in minimap (used when `MiniMap(selectedNodeColor:)` is `nil`) |
 
 ### Snap Lines
 
@@ -128,8 +130,10 @@ SwiftFlow(nodes: nodes, edges: edges, ..., theme: theme) { ... }
 | Property                  | Type     | Default                      | Description              |
 | ------------------------- | -------- | ---------------------------- | ------------------------ |
 | `edgeLabelFont`           | `Font`   | `.system(size: 11)`          | Edge label font          |
-| `edgeLabelColor`          | `Color`  | `.primary`                   | Edge label text color    |
-| `edgeLabelBackgroundColor`| `Color`  | `Color(white: 0.2)`          | Edge label background    |
+| `edgeLabelColor`          | `Color`  | `.black`                     | Edge label text color    |
+| `edgeLabelBackgroundColor`| `Color`  | `.white`                     | Edge label background    |
+
+The `.dark` theme uses `.white` text on `Color(white: 0.2)`.
 
 ## ColorMode
 
@@ -154,7 +158,7 @@ SwiftFlow(..., colorMode: .dark) { ... }
 
 ## Node-Level Styling
 
-Individual nodes and edges can override theme defaults via their `style` property:
+Individual nodes and edges can override theme defaults via their `style` property. The canvas applies `Node.style` (background, falling back to `theme.nodeBackgroundColor`; border color and width; corner radius; opacity) and `EdgeStyle.opacity`:
 
 ### NodeStyle
 
@@ -184,7 +188,7 @@ let styledNode = Node(
 ### EdgeStyle
 
 ```swift
-let styledEdge = Edge(
+let styledEdge = FlowEdge(
     id: "styled-edge",
     source: "1", target: "2",
     style: EdgeStyle(

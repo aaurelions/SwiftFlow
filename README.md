@@ -9,7 +9,7 @@ A SwiftUI-native node-based graph editor inspired by [ReactFlow](https://reactfl
 - **Interactive Canvas** — Pan, zoom (scroll, pinch, double-click), and navigate with keyboard shortcuts
 - **Node Dragging** — Drag nodes with optional snap-to-grid and coordinate extent constraints
 - **Edge Drawing** — Connect nodes by dragging from handles; supports validation callbacks
-- **Selection** — Click, shift-click, or drag a selection box with partial/full containment modes
+- **Selection** — Click, Command-click to multi-select, or drag a selection box with partial/full containment modes
 - **Multiple Edge Types** — Bezier, straight, step, smooth step, and simple bezier paths
 - **Customizable Nodes** — Bring your own SwiftUI views via `@ViewBuilder`
 - **Overlay Components** — Background patterns, minimap, controls panel, toolbars, and more
@@ -24,7 +24,7 @@ A SwiftUI-native node-based graph editor inspired by [ReactFlow](https://reactfl
 
 | Platform | Minimum Version |
 | -------- | --------------- |
-| iOS      | 16.0+           |
+| iOS      | 17.0+           |
 | macOS    | 13.0+           |
 | Swift    | 6.1+            |
 
@@ -42,7 +42,7 @@ Or add it to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/aaurelions/SwiftFlow.git", from: "0.2.0")
+    .package(url: "https://github.com/aaurelions/SwiftFlow.git", from: "0.3.0")
 ]
 ```
 
@@ -133,7 +133,7 @@ SwiftFlow uses a **change-based** state model. The canvas does not own your data
 ```swift
 // You own the state
 @State var nodes: [Node<MyData>] = [...]
-@State var edges: [Edge<EmptyEdgeData>] = [...]
+@State var edges: [FlowEdge<EmptyEdgeData>] = [...]
 
 // SwiftFlow emits changes, you apply them
 SwiftFlow(
@@ -236,10 +236,10 @@ SwiftFlow(
 | `elementsSelectable` | `Bool`            | `true`     | Enable selection                  |
 | `panOnDrag`          | `Bool`            | `true`     | Pan canvas on drag                |
 | `panOnScroll`        | `Bool`            | `false`    | Pan on scroll instead of zoom     |
-| `panOnScrollMode`    | `PanOnScrollMode` | `.free`    | Scroll panning direction          |
+| `panOnScrollMode`    | `PanOnScrollMode` | `.free`    | Scroll panning axis (not drag)    |
 | `zoomOnScroll`       | `Bool`            | `true`     | Zoom with scroll wheel            |
 | `zoomOnPinch`        | `Bool`            | `true`     | Zoom with pinch gesture           |
-| `zoomOnDoubleClick`  | `Bool`            | `true`     | Zoom on double-click              |
+| `zoomOnDoubleClick`  | `Bool`            | `true`     | Double-tap the pane to zoom in 2× |
 | `selectionOnDrag`    | `Bool`            | `false`    | Draw selection box on drag        |
 | `selectNodesOnDrag`  | `Bool`            | `true`     | Select nodes when dragging        |
 | `selectionMode`      | `SelectionMode`   | `.partial` | `.partial` or `.full` containment |
@@ -269,7 +269,7 @@ SwiftFlow(
 | `onNodeClick`          | `Node<T>`              | Node tapped                                |
 | `onNodeDoubleClick`    | `Node<T>`              | Node double-tapped                         |
 | `onEdgeClick`          | `Edge<E>`              | Edge tapped                                |
-| `onEdgeDoubleClick`    | `Edge<E>`              | Edge double-tapped                         |
+| `onEdgeDoubleClick`    | `Edge<E>`              | Edge double-tapped (does not delete)       |
 | `onPaneClick`          | —                      | Background tapped                          |
 | `onViewportChange`     | `Viewport`             | Camera changed                             |
 | `onSelectionChange`    | `[Node<T>], [Edge<E>]` | Selection changed                          |
@@ -282,7 +282,7 @@ SwiftFlow(
 | `onNodesDelete`        | `[Node<T>]`            | Nodes deleted                              |
 | `onEdgesDelete`        | `[Edge<E>]`            | Edges deleted                              |
 | `onDelete`             | `[Node<T>], [Edge<E>]` | Fires after deletion completes             |
-| `onReconnect`          | `Edge<E>, Connection`  | Edge reconnected                           |
+| `onReconnect`          | `Edge<E>, Connection`  | Edge endpoint dropped on a new handle      |
 | `onMoveStart`          | `Viewport`             | Viewport move began                        |
 | `onMove`               | `Viewport`             | Viewport moving                            |
 | `onMoveEnd`            | `Viewport`             | Viewport move ended                        |
@@ -404,12 +404,13 @@ MiniMap { props in
 
 | Property            | Type                          | Default              | Description           |
 | ------------------- | ----------------------------- | -------------------- | --------------------- |
-| `nodeColor`         | `Color`                       | `.gray.opacity(0.5)` | Default node color    |
+| `nodeColor`         | `Color?`                      | `nil` (theme)        | Default node color    |
 | `nodeColorMapper`   | `(MiniMapNodeProps) -> Color` | `nil`                | Dynamic node color    |
-| `selectedNodeColor` | `Color`                       | `.blue`              | Selected node color   |
+| `selectedNodeColor` | `Color?`                      | `nil` (theme)        | Selected node color   |
 | `nodeStrokeColor`   | `Color`                       | `.clear`             | Node border color     |
 | `nodeStrokeWidth`   | `CGFloat`                     | `0`                  | Node border width     |
 | `nodeBorderRadius`  | `CGFloat`                     | `1`                  | Node corner radius    |
+| `maskColor`         | `Color`                       | `.gray.opacity(0.1)` | Area outside viewport |
 | `width`             | `CGFloat`                     | `150`                | MiniMap width         |
 | `height`            | `CGFloat`                     | `100`                | MiniMap height        |
 | `pannable`          | `Bool`                        | `true`               | Click to pan viewport |
@@ -439,15 +440,16 @@ Panel(position: .topRight) {
 
 ### NodeToolbar
 
-Floating toolbar near a selected node.
+Floating toolbar next to a node. Attach it as an overlay of the node view so it does not change the node's measured size. `position` picks the node side, `align` the alignment along that side, and `offset` the gap (default `10`).
 
 ```swift
-if node.selected {
-    NodeToolbar(position: .top) {
-        Button("Delete") { ... }
-        Button("Duplicate") { ... }
+MyNodeView(node: node)
+    .overlay {
+        NodeToolbar(isVisible: node.selected, position: .top) {
+            Button("Delete") { ... }
+            Button("Duplicate") { ... }
+        }
     }
-}
 ```
 
 ---
@@ -466,10 +468,10 @@ EdgeToolbar(isVisible: edge.selected, position: CGPoint(x: midX, y: midY)) {
 
 ### NodeResizer / NodeResizeControl
 
-Resize handles for nodes.
+Resize handles for nodes. Each view renders a single handle; `NodeResizer` is a convenience wrapper around `NodeResizeControl`. Like React Flow's resizer, it updates the node itself through `onNodesChange` (`.dimensions`, plus `.position` for top/left handles so the opposite edge stays fixed); `onResize` is an optional notification.
 
 ```swift
-// Full resizer with all handles
+// Resizer with one handle at `direction`
 NodeResizer(
     nodeId: node.id,
     direction: .bottomRight,
@@ -557,7 +559,7 @@ public struct Node<NodeData: Equatable & Sendable>: Identifiable {
     var focusable: Bool                 // default: true
     var expandable: Bool                // default: false
     var expanded: Bool                  // default: true
-    var expandParent: Bool              // default: false
+    var expandParent: Bool              // default: false (dragging past the parent grows it)
     var zIndex: Int                     // default: 0
     var origin: NodeOrigin              // default: .topLeft
     var sourcePosition: Position?
@@ -584,10 +586,10 @@ public struct Edge<EdgeData: Equatable & Sendable & Hashable>: Identifiable {
     var markerStart: EdgeMarker?
     var markerEnd: EdgeMarker?
     var zIndex: Int                     // default: 0
-    var reconnectable: Bool             // default: false
+    var reconnectable: Bool             // default: false (anchors need `onReconnect`)
     var deletable: Bool                 // default: true
     var focusable: Bool                 // default: true
-    var interactionWidth: CGFloat       // default: 20
+    var interactionWidth: CGFloat       // default: 20 (hit area width)
     var data: EdgeData?
     var style: EdgeStyle?
 }
@@ -596,8 +598,8 @@ public struct Edge<EdgeData: Equatable & Sendable & Hashable>: Identifiable {
 Use `EmptyEdgeData` when you don't need custom data on edges:
 
 ```swift
-@State var edges: [Edge<EmptyEdgeData>] = [
-    Edge(id: "e1", source: "1", target: "2")
+@State var edges: [FlowEdge<EmptyEdgeData>] = [
+    FlowEdge(id: "e1", source: "1", target: "2")
 ]
 ```
 
@@ -632,7 +634,7 @@ public struct Viewport: Equatable, Sendable {
 | `.straight`            | Direct line                                |
 | `.step`                | Right-angle path with sharp corners        |
 | `.smoothstep`          | Right-angle path with rounded corners      |
-| `.simplebezier`        | Quadratic bezier with single control point |
+| `.simplebezier`        | Cubic bezier with midpoint control points  |
 
 ### NodeChange / EdgeChange
 
@@ -667,10 +669,11 @@ let newNodes = applyNodeChanges(changes, nodes: nodes)
 // Apply edge changes to an edge array
 let newEdges = applyEdgeChanges(changes, edges: edges)
 
-// Create an edge from a connection (prevents duplicates)
+// Create an edge from a connection (prevents duplicates).
+// The id follows React Flow: "xy-edge__{source}{sourceHandle}-{target}{targetHandle}".
 let newEdges = addEdge(connection, edges: edges, defaults: DefaultEdgeOptions(...))
 
-// Reconnect an existing edge
+// Reconnect an existing edge (use in `onReconnect`)
 let newEdges = reconnectEdge(oldEdge, newConnection, edges)
 ```
 
@@ -698,10 +701,10 @@ let overlaps = isNodeIntersecting(node: nodeA, otherNode: nodeB)
 
 ### Edge Path Functions
 
-All path functions come in two variants: a simple version and a position-aware version that accounts for handle placement.
+The position-aware functions port React Flow's algorithms and return `(path, labelX, labelY, offsetX, offsetY)`. The simple overloads return only a `Path` and assume the source handle is on the right and the target handle on the left. The canvas itself routes edges using each `Handle`'s `position`.
 
 ```swift
-// Simple (source/target coordinates only)
+// Simple (source on the right, target on the left)
 let path = getBezierPath(sourceX: 0, sourceY: 0, targetX: 200, targetY: 100)
 
 // Position-aware (includes handle positions, returns label position)
@@ -721,7 +724,7 @@ let result = getEdgePathResult(type: .bezier, sourceX: 0, sourceY: 0, targetX: 2
 | Function                | Description                     |
 | ----------------------- | ------------------------------- |
 | `getBezierPath()`       | Cubic bezier curve              |
-| `getSimpleBezierPath()` | Quadratic bezier curve          |
+| `getSimpleBezierPath()` | Simple cubic bezier curve       |
 | `getStraightPath()`     | Straight line                   |
 | `getStepPath()`         | Right-angle steps (sharp)       |
 | `getSmoothStepPath()`   | Right-angle steps (rounded)     |
@@ -835,8 +838,8 @@ Programmatic viewport and graph control.
 | `fitView(nodes:nodeSizes:options:)` | Fit nodes in view                 |
 | `setCenter(x:y:zoom:animated:)`     | Center on coordinates             |
 | `zoomTo(_:animated:)`               | Set zoom level                    |
-| `zoomIn(animated:)`                 | Zoom in 25%                       |
-| `zoomOut(animated:)`                | Zoom out 25%                      |
+| `zoomIn(animated:)`                 | Zoom in by a factor of 1.2        |
+| `zoomOut(animated:)`                | Zoom out by a factor of 1.2       |
 | `reset(animated:)`                  | Reset to origin at 100% zoom      |
 | `screenToFlowPosition(_:)`          | Convert screen → flow coordinates |
 | `flowToScreenPosition(_:)`          | Convert flow → screen coordinates |
@@ -867,13 +870,14 @@ Key theme properties:
 | ----------------------------------------------------- | ------------------- |
 | `edgeColor` / `edgeSelectedColor`                     | Edge colors         |
 | `edgeWidth` / `edgeSelectedWidth`                     | Edge widths         |
-| `nodeBackgroundColor`                                 | Node background     |
-| `nodeSelectedBorderColor` / `nodeSelectedBorderWidth` | Selection indicator |
-| `handleColor` / `handleBorderColor` / `handleSize`    | Handle styling      |
+| `nodeBackgroundColor`                                 | Background of nodes that set `Node.style` |
+| `nodeSelectedBorderColor` / `nodeSelectedBorderWidth` | Outline of selected nodes (width `0` disables) |
+| `handleColor` / `handleBorderColor` / `handleSize`    | `Handle` styling when no color is passed |
+| `minimapNodeColor` / `minimapSelectedNodeColor` / `minimapBackgroundOpacity` | `MiniMap` defaults |
 | `selectionBoxColor` / `selectionBoxBorderColor`       | Selection box       |
 | `canvasBackgroundColor`                               | Canvas background   |
 | `snapLineColor` / `snapLineWidth`                     | Snap guides         |
-| `edgeLabelFont` / `edgeLabelColor`                    | Edge labels         |
+| `edgeLabelFont` / `edgeLabelColor` / `edgeLabelBackgroundColor` | Edge labels |
 
 Presets: `.default`, `.light`, `.dark`
 
@@ -993,13 +997,13 @@ When `extent` is `.parent`, the node cannot be dragged outside its parent node's
 | --------------------------------------- | ----------------------------- | ------------- |
 | Hover events (`onNodeMouseEnter`, etc.) | Supported via `onHover`       | Not available |
 | Context menu trigger                    | Right-click (secondary click) | Long press    |
-| Keyboard shortcuts                      | Full support                  | Limited       |
+| Keyboard shortcuts                      | Full support                  | Focus/selection keys (hardware keyboard) |
 
 ---
 
 ## ReactFlow Compatibility
 
-SwiftFlow adapts familiar ReactFlow concepts to SwiftUI-native APIs. Release 0.2.0 focuses on the core canvas, nodes, edges, handles, overlays, callbacks, graph utilities, serialization, theming, and auto layout; some ReactFlow-specific browser APIs are intentionally different or not applicable on Apple platforms.
+SwiftFlow adapts familiar ReactFlow concepts to SwiftUI-native APIs. Release 0.3.0 focuses on the core canvas, nodes, edges, handles, overlays, callbacks, graph utilities, serialization, theming, and auto layout; some ReactFlow-specific browser APIs are intentionally different or not applicable on Apple platforms.
 
 ### Key Differences
 
@@ -1015,7 +1019,7 @@ SwiftFlow adapts familiar ReactFlow concepts to SwiftUI-native APIs. Release 0.2
 
 ### Feature Parity
 
-| Category               | SwiftFlow 0.2.0 Status |
+| Category               | SwiftFlow 0.3.0 Status |
 | ---------------------- | ---------------------- |
 | Components             | Core canvas, handles, controls, minimap, backgrounds, panels, toolbars, resize controls, and edge label helpers |
 | State Patterns         | Change callbacks, `SwiftFlowStore`, `SwiftFlowProvider`, and `SwiftFlowInstance` |

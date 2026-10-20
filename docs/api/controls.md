@@ -64,7 +64,7 @@ Use `ControlButton` for consistent styling with the built-in zoom buttons.
 
 ## How It Works
 
-Controls reads viewport state from the `SwiftFlowState` environment object and applies changes through it. The zoom buttons call `zoomIn()`, `zoomOut()`, and `zoomTo(1.0)` on the state, while the fit button calls `fitView()`.
+Controls reads viewport state from the `SwiftFlowState` environment object and applies changes through it. The zoom buttons call `zoomIn()`, `zoomOut()`, and `zoomTo(1.0)` on the state, while the fit button fits the view using the canvas `fitViewOptions`. Each zoom step is a factor of 1.2. Button accessibility labels come from `accessibilityConfig` (`zoomInAriaLabel`, `zoomOutAriaLabel`, `fitViewAriaLabel`, `interactiveAriaLabel`, `controlsAriaLabel`).
 
 The zoom percentage display shows the current zoom level as an integer percentage (e.g., "100%" at default zoom).
 

@@ -164,7 +164,8 @@ private func applyTreeLayout<T: Equatable & Sendable, E: Equatable & Sendable & 
       guard let index = nodes.firstIndex(where: { $0.id == nodeId }) else { continue }
       let reverse = direction == .bottomToTop || direction == .rightToLeft
       let levelOffset = CGFloat(reverse ? maxLevel - level : level) * levelSpacing
-      nodes[index].position = horizontal
+      nodes[index].position =
+        horizontal
         ? XYPosition(x: levelOffset, y: offset)
         : XYPosition(x: offset, y: levelOffset)
       offset += lengths[i] + nodeSpacing
@@ -287,8 +288,12 @@ private func applyGridLayout<T: Equatable & Sendable>(
   }
   var xOffsets = Array(repeating: CGFloat.zero, count: widths.count)
   var yOffsets = Array(repeating: CGFloat.zero, count: heights.count)
-  for i in widths.indices.dropFirst() { xOffsets[i] = xOffsets[i - 1] + widths[i - 1] + nodeSpacing }
-  for i in heights.indices.dropFirst() { yOffsets[i] = yOffsets[i - 1] + heights[i - 1] + nodeSpacing }
+  for i in widths.indices.dropFirst() {
+    xOffsets[i] = xOffsets[i - 1] + widths[i - 1] + nodeSpacing
+  }
+  for i in heights.indices.dropFirst() {
+    yOffsets[i] = yOffsets[i - 1] + heights[i - 1] + nodeSpacing
+  }
   for i in nodes.indices {
     nodes[i].position = XYPosition(x: xOffsets[i % columns], y: yOffsets[i / columns])
   }

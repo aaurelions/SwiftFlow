@@ -31,7 +31,7 @@ SwiftFlow(nodes: nodes, edges: edges, ...,
 ) { ... }
 ```
 
-`panOnScrollMode` controls the pan direction:
+`panOnScrollMode` restricts the pan direction of scroll panning only (drag panning is always free):
 
 | Mode          | Description                                   |
 | ------------- | --------------------------------------------- |
@@ -59,7 +59,7 @@ SwiftFlow(nodes: nodes, edges: edges, ..., zoomOnPinch: true) { ... }
 
 ### Double-Click Zoom
 
-Double-click on empty canvas to fit all nodes into view:
+Double-tapping empty canvas zooms in by a factor of 2 around the center of the view:
 
 ```swift
 SwiftFlow(nodes: nodes, edges: edges, ..., zoomOnDoubleClick: true) { ... }
@@ -199,10 +199,10 @@ SwiftFlow(nodes: nodes, edges: edges, ...,
 Edges can be reconnected when `reconnectable: true` is set on the edge:
 
 ```swift
-Edge(id: "e1", source: "1", target: "2", reconnectable: true)
+FlowEdge(id: "e1", source: "1", target: "2", reconnectable: true)
 ```
 
-When a reconnectable edge is selected, draggable endpoint handles appear. Configure `onReconnect` to handle the new connection:
+Endpoint anchors appear only when `onReconnect` is set, the edge is `reconnectable`, the edge is selected, and `nodesConnectable` is on. The edge is not removed when the drag starts. On a valid drop, `onReconnect` is called with the original edge and the new connection; dropping anywhere else leaves the edge unchanged. `onConnect` is not used as a fallback.
 
 ```swift
 SwiftFlow(nodes: nodes, edges: edges, ...,
@@ -216,7 +216,7 @@ SwiftFlow(nodes: nodes, edges: edges, ...,
 
 ### Node and Edge Selection
 
-Tap a node or edge to select it. Only one item is selected at a time in the default mode.
+Tapping a node selects it and deselects all other nodes and edges (the same applies when tapping an edge). Hold **Command** (macOS) while tapping to toggle the element for multi-selection. `onNodeClick`, `onEdgeClick` and `onPaneClick` fire even when selection is disabled.
 
 ```swift
 SwiftFlow(nodes: nodes, edges: edges, ..., elementsSelectable: true) { ... }
@@ -244,26 +244,29 @@ SwiftFlow(nodes: nodes, edges: edges, ..., selectNodesOnDrag: false) { ... }
 | Shortcut             | Action                                    |
 | -------------------- | ----------------------------------------- |
 | **Cmd+A**            | Select all nodes and edges                |
-| **Cmd+C / Cmd+V**    | Copy / paste selected nodes               |
-| **Cmd+Z**            | Undo                                      |
+| **Cmd+C / Cmd+V**    | Copy / paste selected nodes and the edges between them |
+| **Cmd+Z**            | Undo (covers deletions and pastes)        |
 | **Cmd+Shift+Z**      | Redo                                      |
-| **Delete / Backspace** | Delete selected nodes and edges (deletable only; deleting a node removes its incident edges) |
-| **Arrow keys**       | Nudge selected nodes by 1pt               |
+| **Delete / Backspace** | Delete selected nodes and edges (deletable only; deleting a node also removes its deletable descendants via `parentId` and all connected edges) |
+| **Arrow keys**       | Nudge selected nodes by 1pt (respects `nodesDraggable` and `Node.draggable`) |
 | **Shift+Arrow**      | Nudge selected nodes by 10pt              |
+| **Tab / Shift+Tab**  | Move keyboard focus between focusable nodes, then edges (an off-screen node is panned into view) |
+| **Return / Space**   | Select the focused node or edge           |
+| **Escape**           | Deselect all                              |
+
+The canvas receives keys after a click inside it, and never while a text field (including one inside a node) is being edited. Clicking the empty pane ends text editing. Set `Node.focusable` / `Edge.focusable` to `false` to skip elements in the focus order. On iOS, focusable elements take system keyboard focus with a hardware keyboard, and Return/Space/Escape behave the same.
+
+Pasted edges keep all of their properties (data, style, zIndex, ...). Pasted children of copied parents keep their relative position; other pasted nodes are offset by 50pt.
 
 Customize keyboard shortcuts:
 
 ```swift
 SwiftFlow(nodes: nodes, edges: edges, ...,
     keyboardShortcuts: KeyboardShortcuts(
-        selectAll: KeyCode(key: "a", modifier: .command),
-        delete: KeyCode(key: .delete, modifier: []),
-        undo: KeyCode(key: "z", modifier: .command),
-        redo: KeyCode(key: "z", modifier: [.command, .shift]),
-        copy: KeyCode(key: "c", modifier: .command),
-        paste: KeyCode(key: "v", modifier: .command),
-        arrowNudge: 1,
-        shiftArrowNudge: 10
+        deleteKeyCode: KeyCode.backspace.rawValue,
+        forwardDeleteKeyCode: KeyCode.forwardDelete.rawValue,
+        nudgeDistance: 1,
+        shiftNudgeDistance: 10
     )
 ) { ... }
 ```
@@ -286,9 +289,9 @@ Control render order with `zIndexMode`:
 
 | Mode      | Description                                                    |
 | --------- | -------------------------------------------------------------- |
-| `.auto`   | Selected items come to front; sub-flows managed automatically  |
-| `.basic`  | Selected items come to front only                              |
-| `.manual` | No automatic z-indexing; values are entirely user-controlled   |
+| `.auto`   | Selected nodes come to front (default)                         |
+| `.basic`  | Selected nodes come to front                                   |
+| `.manual` | Only `zIndex` is used; selection does not raise nodes          |
 
 ```swift
 // Manual z-index per node
@@ -302,14 +305,39 @@ SwiftFlow includes built-in accessibility support:
 
 - VoiceOver labels for nodes and edges
 - Keyboard navigation and activation
-- Configurable announcements for selection and connection events
+- Configurable labels and hints for nodes, edges, handles, Controls buttons and the MiniMap
 
 ```swift
 SwiftFlow(nodes: nodes, edges: edges, ...,
     accessibilityConfig: AccessibilityConfig(
-        nodeSelectedMessage: "Node selected",
-        edgeSelectedMessage: "Edge selected",
-        connectionCreatedMessage: "Connection created"
+        nodeRoleDescription: "Workflow step",
+        edgeRoleDescription: "Workflow link",
+        handleAriaLabel: "Drag to connect",
+        zoomInAriaLabel: "Zoom in"
     )
 ) { ... }
 ```
+
+### Announcements and Localization
+
+While VoiceOver runs, the canvas announces selection changes (debounced, so a selection box announces once it settles) and new connections or reconnections. Turn them off with `announceSelectionChanges` / `announceConnectionEvents`.
+
+All default labels and messages come from SwiftFlow's string catalog (`Sources/SwiftFlow/Resources/Localizable.xcstrings`, English with plural rules), so translations can be added to the package. To use your own wording or your app's translations, pass strings or message closures:
+
+```swift
+AccessibilityConfig(
+    nodeRoleDescription: String(localized: "Workflow step"),
+    selectionAnnouncement: { nodes, edges in
+        String(localized: "\(nodes) steps and \(edges) links selected")
+    },
+    connectionAnnouncement: { connection in
+        String(localized: "Linked \(connection.source) to \(connection.target)")
+    }
+)
+```
+
+Arguments left `nil` use the localized defaults. `==` compares the strings and flags; the closures are not compared.
+
+## Expanding Parents
+
+A child with `expandParent: true` grows its parent while being dragged past the parent's right or bottom edge. Dragging past the top or left edge moves the parent and shifts its other children so they keep their place. With `extent: .parent`, the child stays at or beyond the parent's top-left corner and the parent grows to the right and bottom.

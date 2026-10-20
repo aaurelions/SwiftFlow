@@ -1,6 +1,6 @@
 import Foundation
 
-/// Applies an array of node changes to a node array and returns the new array.
+/// Applies node changes to a node array and returns the new array.
 ///
 /// This is the primary state-update function for nodes. Use it in your
 /// `onNodesChange` callback:
@@ -10,40 +10,35 @@ import Foundation
 ///     nodes = applyNodeChanges(changes, nodes: nodes)
 /// }
 /// ```
+///
+/// Changes are applied in order. Changes that reference unknown IDs are
+/// ignored, and `.add` is ignored when a node with the same ID already exists.
 public func applyNodeChanges<T: Sendable>(_ changes: [NodeChange<T>], nodes: [Node<T>]) -> [Node<T>]
 {
-  var result = nodes
+  var elements = IndexedElements(nodes)
   for change in changes {
     switch change {
     case .position(let id, let position):
-      if let i = result.firstIndex(where: { $0.id == id }) {
-        result[i].position = position
-      }
+      elements.update(id) { $0.position = position }
     case .selection(let id, let selected):
-      if let i = result.firstIndex(where: { $0.id == id }) {
-        result[i].selected = selected
-      }
-    case .remove(let id):
-      result.removeAll { $0.id == id }
-    case .add(let item):
-      if !result.contains(where: { $0.id == item.id }) {
-        result.append(item)
-      }
+      elements.update(id) { $0.selected = selected }
     case .dimensions(let id, let width, let height):
-      if let i = result.firstIndex(where: { $0.id == id }) {
-        result[i].width = width
-        result[i].height = height
+      elements.update(id) {
+        $0.width = width
+        $0.height = height
       }
     case .replace(let id, let item):
-      if let i = result.firstIndex(where: { $0.id == id }) {
-        result[i] = item
-      }
+      elements.update(id) { $0 = item }
+    case .remove(let id):
+      elements.remove(id)
+    case .add(let item):
+      elements.add(item)
     }
   }
-  return result
+  return elements.items
 }
 
-/// Applies an array of edge changes to an edge array and returns the new array.
+/// Applies edge changes to an edge array and returns the new array.
 ///
 /// This is the primary state-update function for edges. Use it in your
 /// `onEdgesChange` callback:
@@ -53,28 +48,64 @@ public func applyNodeChanges<T: Sendable>(_ changes: [NodeChange<T>], nodes: [No
 ///     edges = applyEdgeChanges(changes, edges: edges)
 /// }
 /// ```
+///
+/// Changes are applied in order. Changes that reference unknown IDs are
+/// ignored, and `.add` is ignored when an edge with the same ID already exists.
 public func applyEdgeChanges<EdgeData: Equatable & Sendable & Hashable>(
   _ changes: [EdgeChange<EdgeData>],
   edges: [Edge<EdgeData>]
 ) -> [Edge<EdgeData>] {
-  var result = edges
+  var elements = IndexedElements(edges)
   for change in changes {
     switch change {
     case .selection(let id, let selected):
-      if let i = result.firstIndex(where: { $0.id == id }) {
-        result[i].selected = selected
-      }
-    case .remove(let id):
-      result.removeAll { $0.id == id }
-    case .add(let item):
-      if !result.contains(where: { $0.id == item.id }) {
-        result.append(item)
-      }
+      elements.update(id) { $0.selected = selected }
     case .replace(let id, let item):
-      if let i = result.firstIndex(where: { $0.id == id }) {
-        result[i] = item
-      }
+      elements.update(id) { $0 = item }
+    case .remove(let id):
+      elements.remove(id)
+    case .add(let item):
+      elements.add(item)
     }
   }
-  return result
+  return elements.items
+}
+
+/// An array with a lazily rebuilt ID → index lookup, so applying many
+/// changes does not scan the whole array for every change.
+private struct IndexedElements<Element: Identifiable> where Element.ID == String {
+  private(set) var items: [Element]
+  private var indexById: [String: Int]?
+
+  init(_ items: [Element]) { self.items = items }
+
+  private mutating func index(of id: String) -> Int? {
+    if indexById == nil {
+      var lookup: [String: Int] = [:]
+      for (index, item) in items.enumerated() where lookup[item.id] == nil {
+        lookup[item.id] = index
+      }
+      indexById = lookup
+    }
+    return indexById?[id]
+  }
+
+  mutating func update(_ id: String, _ transform: (inout Element) -> Void) {
+    guard let index = index(of: id) else { return }
+    transform(&items[index])
+    // A replacement may change the ID stored at this index.
+    if items[index].id != id { indexById = nil }
+  }
+
+  mutating func remove(_ id: String) {
+    guard index(of: id) != nil else { return }
+    items.removeAll { $0.id == id }
+    indexById = nil
+  }
+
+  mutating func add(_ item: Element) {
+    guard index(of: item.id) == nil else { return }
+    items.append(item)
+    indexById?[item.id] = items.count - 1
+  }
 }

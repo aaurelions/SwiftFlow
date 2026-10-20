@@ -8,7 +8,7 @@ Manage graph state directly in a `@State` property:
 
 ```swift
 @State var nodes: [Node<MyData>] = [...]
-@State var edges: [Edge<EmptyEdgeData>] = [...]
+@State var edges: [FlowEdge<EmptyEdgeData>] = [...]
 
 SwiftFlow(
     nodes: nodes,
@@ -118,7 +118,7 @@ let deleted = store.deleteElements(
 // deleted.edges contains removed edges
 ```
 
-Deletion respects each element's `deletable` flag, and deleting a node also removes every edge connected to it (including protected edges whose endpoint no longer exists), so no dangling connections are left behind.
+Deletion respects each element's `deletable` flag. Deletable nodes are removed together with their deletable descendants (the `parentId` chain) and every edge connected to any removed node, so no dangling connections are left behind. The same rules apply to keyboard deletion and `SwiftFlowInstance.deleteElements(nodeIds:edgeIds:)`.
 
 ## SwiftFlowProvider
 
@@ -237,8 +237,8 @@ struct CustomOverlay: View {
 
 SwiftFlow has a built-in undo/redo stack on macOS. The canvas automatically pushes state before every mutation. Use `Cmd+Z` to undo and `Cmd+Shift+Z` to redo.
 
-The undo stack has a maximum depth of 50 entries.
+Undo and redo cover deletions and pastes as well as other mutations. The undo stack has a maximum depth of 50 entries.
 
 ## Copy / Paste
 
-Selected nodes (and edges between them) can be copied with `Cmd+C` and pasted with `Cmd+V`. Pasted nodes are offset by 50pt and assigned new unique IDs.
+Selected nodes (and edges between them) can be copied with `Cmd+C` and pasted with `Cmd+V`. Pasted nodes get new unique IDs; pasted edges keep all of their properties (data, style, zIndex, ...). Pasted children of copied parents keep their relative position; other pasted nodes are offset by 50pt.

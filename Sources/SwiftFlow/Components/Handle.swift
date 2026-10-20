@@ -3,8 +3,9 @@ import SwiftUI
 /// A connection handle placed inside custom node views.
 ///
 /// Handles define the connection points where edges attach to nodes.
-/// Each handle has a `type` (source or target) and a `position` that
-/// determines its visual placement within the node.
+/// Each handle has a `type` (source or target) and a `position`: the node
+/// side the handle sits on. Place the handle on that side in your node
+/// layout. Edges leave and enter the handle in the direction of `position`.
 ///
 /// ```swift
 /// HStack {
@@ -18,15 +19,20 @@ public struct Handle: View {
   public var id: String
   public var type: HandleType
   public var position: Position
-  public var color: Color
+  /// Fill color. `nil` uses the canvas theme's `handleColor`.
+  public var color: Color?
+  /// Whether connections can start or end at this handle.
   public var isConnectable: Bool
+
+  @Environment(\.swiftFlowTheme) private var theme
+  @Environment(\.swiftFlowAccessibilityConfig) private var accessibilityConfig
 
   public init(
     nodeId: String,
     id: String,
     type: HandleType = .source,
     position: Position,
-    color: Color = .gray,
+    color: Color? = nil,
     isConnectable: Bool = true
   ) {
     self.nodeId = nodeId
@@ -44,7 +50,7 @@ public struct Handle: View {
     handleId: String,
     type: HandleType = .source,
     position: Position,
-    color: Color = .gray,
+    color: Color? = nil,
     isConnectable: Bool = true
   ) {
     self.init(
@@ -55,28 +61,53 @@ public struct Handle: View {
   public var isSource: Bool { type == .source }
 
   public var body: some View {
+    let fill = color ?? theme.handleColor
+    let key = HandlePositionPreferenceKey.makeKey(nodeId: nodeId, handleId: id, type: type)
     Circle()
-      .fill(color)
-      .frame(width: 12, height: 12)
-      .overlay(Circle().stroke(Color.white, lineWidth: 2))
-      .shadow(color: color.opacity(0.4), radius: 2)
+      .fill(fill)
+      .frame(width: theme.handleSize, height: theme.handleSize)
+      .overlay(Circle().stroke(theme.handleBorderColor, lineWidth: 2))
+      .shadow(color: fill.opacity(0.4), radius: 2)
       .background(
         GeometryReader { geo in
-          let frame = geo.frame(in: .named("SwiftFlowCanvas"))
-          let key = HandlePositionPreferenceKey.makeKey(nodeId: nodeId, handleId: id, type: type)
+          let frame = geo.frame(in: .named(canvasCoordinateSpace))
           Color.clear
             .preference(
               key: HandlePositionPreferenceKey.self,
               value: [key: CGPoint(x: frame.midX, y: frame.midY)]
             )
+            .preference(key: HandleTypePreferenceKey.self, value: [key: type])
             .preference(
-              key: HandleTypePreferenceKey.self,
-              value: [key: type]
+              key: HandleInfoPreferenceKey.self,
+              value: [key: HandleInfo(position: position, isConnectable: isConnectable)]
             )
         }
       )
       .accessibilityElement()
-      .accessibilityLabel("\(isSource ? "Output" : "Input") handle \(id)")
-      .accessibilityHint("Drag to create a connection")
+      .accessibilityLabel(
+        isSource
+          ? String(
+            localized: "Output handle \(id)", bundle: .module, comment: "Source handle label")
+          : String(localized: "Input handle \(id)", bundle: .module, comment: "Target handle label")
+      )
+      .accessibilityHint(accessibilityConfig.handleAriaLabel)
+  }
+}
+
+/// Name of the coordinate space of the canvas content (flow coordinates).
+let canvasCoordinateSpace = "SwiftFlowCanvas"
+
+/// Side and connectability of a rendered handle.
+struct HandleInfo: Equatable {
+  var position: Position
+  var isConnectable: Bool
+}
+
+/// Propagates `HandleInfo` values keyed like `HandlePositionPreferenceKey`.
+struct HandleInfoPreferenceKey: PreferenceKey {
+  static let defaultValue: [String: HandleInfo] = [:]
+
+  static func reduce(value: inout [String: HandleInfo], nextValue: () -> [String: HandleInfo]) {
+    value.merge(nextValue()) { current, _ in current }
   }
 }

@@ -2,9 +2,14 @@ import SwiftUI
 
 /// A single resize handle for nodes.
 ///
-/// Unlike `NodeResizer` which provides a full set of resize handles,
-/// `NodeResizeControl` renders a single handle at a specific position.
-/// Use multiple instances to create custom resize configurations.
+/// Renders one handle at `position` on the edge of the view it is placed in.
+/// Use multiple instances to build custom resize configurations.
+///
+/// Like React Flow, a control inside a `SwiftFlow` canvas resizes the node
+/// itself: it reports `.dimensions` changes, plus `.position` changes for
+/// handles on the top or left side, through the canvas's `onNodesChange`, so
+/// the opposite edge stays in place. `onResize` is a notification with the
+/// new width and height; `shouldResize` can veto a step.
 ///
 /// ```swift
 /// ZStack {
@@ -33,6 +38,7 @@ public struct NodeResizeControl: View {
   public var shouldResize: ((CGFloat, CGFloat) -> Bool)?
 
   @State private var startSize: CGSize?
+  @Environment(\.swiftFlowNodeResize) private var resizeNode
 
   public init(
     nodeId: String,
@@ -74,9 +80,12 @@ public struct NodeResizeControl: View {
           .position(handlePosition(in: geo.size))
           .cursor(cursorForDirection)
           .gesture(
-            DragGesture()
+            // Measure in canvas coordinates: the handle moves while resizing,
+            // so its local coordinate space is not stable.
+            DragGesture(coordinateSpace: .named(canvasCoordinateSpace))
               .onChanged { value in
-                if startSize == nil {
+                let isStart = startSize == nil
+                if isStart {
                   startSize = geo.size
                   onResizeStart?()
                 }
@@ -84,11 +93,21 @@ public struct NodeResizeControl: View {
                 let delta = translationForDirection(value.translation)
                 let w = min(maxWidth, max(minWidth, start.width + delta.width))
                 let h = min(maxHeight, max(minHeight, start.height + delta.height))
-                if shouldResize?(w, h) ?? true {
-                  onResize?(w, h)
-                }
+                guard shouldResize?(w, h) ?? true else { return }
+                resizeNode?(
+                  NodeResizeEvent(
+                    nodeId: nodeId, phase: isStart ? .start : .change,
+                    startSize: start, size: CGSize(width: w, height: h),
+                    movesLeftEdge: movesLeftEdge, movesTopEdge: movesTopEdge))
+                onResize?(w, h)
               }
               .onEnded { _ in
+                if let start = startSize {
+                  resizeNode?(
+                    NodeResizeEvent(
+                      nodeId: nodeId, phase: .end, startSize: start, size: start,
+                      movesLeftEdge: movesLeftEdge, movesTopEdge: movesTopEdge))
+                }
                 startSize = nil
                 onResizeEnd?()
               }
@@ -96,6 +115,14 @@ public struct NodeResizeControl: View {
       }
       .allowsHitTesting(true)
     }
+  }
+
+  private var movesLeftEdge: Bool {
+    [.topLeft, .left, .bottomLeft].contains(position)
+  }
+
+  private var movesTopEdge: Bool {
+    [.topLeft, .top, .topRight].contains(position)
   }
 
   private func handlePosition(in size: CGSize) -> CGPoint {
@@ -134,6 +161,47 @@ public struct NodeResizeControl: View {
   }
 }
 
+// MARK: - Canvas Integration
+
+/// A resize step reported by `NodeResizeControl` to the enclosing canvas.
+struct NodeResizeEvent {
+  enum Phase { case start, change, end }
+
+  var nodeId: String
+  var phase: Phase
+  /// Node size when the drag started.
+  var startSize: CGSize
+  /// New node size (equal to `startSize` for `.end`).
+  var size: CGSize
+  /// Whether the handle moves the left edge (the right edge stays fixed).
+  var movesLeftEdge: Bool
+  /// Whether the handle moves the top edge (the bottom edge stays fixed).
+  var movesTopEdge: Bool
+}
+
+/// Position offset that keeps the edges opposite to the dragged handle fixed
+/// for a node anchored at `origin`.
+func resizePositionOffset(for event: NodeResizeEvent, origin: NodeOrigin) -> XYPosition {
+  let dw = event.size.width - event.startSize.width
+  let dh = event.size.height - event.startSize.height
+  return XYPosition(
+    x: event.movesLeftEdge ? -(1 - origin.x) * dw : origin.x * dw,
+    y: event.movesTopEdge ? -(1 - origin.y) * dh : origin.y * dh)
+}
+
+private struct SwiftFlowNodeResizeKey: EnvironmentKey {
+  // An immutable `nil`; no shared mutable state.
+  nonisolated(unsafe) static let defaultValue: ((NodeResizeEvent) -> Void)? = nil
+}
+
+extension EnvironmentValues {
+  /// Applies resize steps to nodes; set by `SwiftFlow`.
+  var swiftFlowNodeResize: ((NodeResizeEvent) -> Void)? {
+    get { self[SwiftFlowNodeResizeKey.self] }
+    set { self[SwiftFlowNodeResizeKey.self] = newValue }
+  }
+}
+
 // MARK: - Resize Cursor
 
 enum ResizeCursor {
@@ -143,18 +211,13 @@ enum ResizeCursor {
 extension View {
   @ViewBuilder
   fileprivate func cursor(_ cursor: ResizeCursor) -> some View {
-    #if os(macOS)
-      self.onHover { hovering in
-        if hovering {
-          switch cursor {
-          case .nwseResize: NSCursor.crosshair.push()
-          case .neswResize: NSCursor.crosshair.push()
-          case .ewResize: NSCursor.resizeLeftRight.push()
-          case .nsResize: NSCursor.resizeUpDown.push()
-          }
-        } else {
-          NSCursor.pop()
-        }
+    #if canImport(AppKit)
+      // AppKit has no public diagonal resize cursors before macOS 15, so the
+      // diagonal handles use the crosshair.
+      switch cursor {
+      case .nwseResize, .neswResize: hoverCursor(.crosshair)
+      case .ewResize: hoverCursor(.resizeLeftRight)
+      case .nsResize: hoverCursor(.resizeUpDown)
       }
     #else
       self

@@ -64,13 +64,13 @@ MiniMap(
 
 | Parameter          | Type                              | Default              | Description                      |
 | ------------------ | --------------------------------- | -------------------- | -------------------------------- |
-| `nodeColor`        | `Color`                           | `.gray.opacity(0.5)` | Default node fill color          |
+| `nodeColor`        | `Color?`                          | `nil`                | Node fill color; `nil` uses `theme.minimapNodeColor` |
 | `nodeColorMapper`  | `((MiniMapNodeProps) -> Color)?`  | `nil`                | Dynamic color by node properties |
-| `selectedNodeColor`| `Color`                           | `.blue`              | Selected node fill color         |
+| `selectedNodeColor`| `Color?`                          | `nil`                | Selected node fill color; `nil` uses `theme.minimapSelectedNodeColor` |
 | `nodeStrokeColor`  | `Color`                           | `.clear`             | Node border color                |
 | `nodeStrokeWidth`  | `CGFloat`                         | `0`                  | Node border width                |
 | `nodeBorderRadius` | `CGFloat`                         | `1`                  | Node corner radius               |
-| `maskColor`        | `Color`                           | `.gray.opacity(0.1)` | Background mask color            |
+| `maskColor`        | `Color`                           | `.gray.opacity(0.1)` | Color covering the area outside the visible viewport |
 | `width`            | `CGFloat`                         | `150`                | MiniMap width                    |
 | `height`           | `CGFloat`                         | `100`                | MiniMap height                   |
 | `pannable`         | `Bool`                            | `true`               | Click-drag to pan main viewport  |
@@ -95,5 +95,7 @@ public struct MiniMapNodeProps: Sendable {
 ## How It Works
 
 The MiniMap reads all visible nodes and the current viewport from `SwiftFlowState`, then computes a bounding box covering both the visible canvas area and every node, so the viewport indicator stays accurate even when the graph is small or far away. It scales the whole box to fit within its frame; a blue rectangle indicates the current viewport position. Edges are rendered as simple straight lines below the nodes at reduced opacity.
+
+The MiniMap is drawn on a material background whose opacity is `theme.minimapBackgroundOpacity`, and `maskColor` covers everything outside the visible viewport (React Flow semantics). Its VoiceOver label comes from `accessibilityConfig.minimapAriaLabel`.
 
 Dragging within the MiniMap pans the main canvas viewport proportionally; when `zoomable` is `true`, a magnification gesture zooms the main viewport around its current center. Both gestures respect the canvas `isInteractive` state and are ignored while it is disabled. When `pannable` is `false`, the MiniMap acts as a read-only overview.

@@ -31,7 +31,7 @@ struct SerEdgeData: Equatable, Sendable, Codable, Hashable {
 
 struct SerializationExample: View {
     @State var nodes: [Node<SerNodeData>] = makeDemoNodes()
-    @State var edges: [Edge<SerEdgeData>] = makeDemoEdges()
+    @State var edges: [FlowEdge<SerEdgeData>] = makeDemoEdges()
     @State var viewport: Viewport = .identity
     @State var statusMessage: String = "Ready"
     @State var jsonPreview: String = ""
@@ -281,27 +281,27 @@ func makeDemoNodes() -> [Node<SerNodeData>] {
     ]
 }
 
-func makeDemoEdges() -> [Edge<SerEdgeData>] {
+func makeDemoEdges() -> [FlowEdge<SerEdgeData>] {
     [
-        Edge(id: "e1", source: "n1", target: "n2",
+        FlowEdge(id: "e1", source: "n1", target: "n2",
              type: .smoothstep,
              label: "depends_on",
              markerEnd: .arrowClosed,
              data: SerEdgeData(relation: "depends_on", weight: 1.0,
                                description: "Auth requires database")),
-        Edge(id: "e2", source: "n1", target: "n3",
+        FlowEdge(id: "e2", source: "n1", target: "n3",
              type: .smoothstep,
              label: "uses",
              markerEnd: .arrowClosed,
              data: SerEdgeData(relation: "references", weight: 0.5,
                                description: "Auth uses cache")),
-        Edge(id: "e3", source: "n2", target: "n4",
+        FlowEdge(id: "e3", source: "n2", target: "n4",
              type: .smoothstep,
              label: "feeds",
              markerEnd: .arrowClosed,
              data: SerEdgeData(relation: "depends_on", weight: 1.0,
                                description: "Gateway reads from database")),
-        Edge(id: "e4", source: "n3", target: "n4",
+        FlowEdge(id: "e4", source: "n3", target: "n4",
              type: .smoothstep,
              label: "feeds",
              markerEnd: .arrowClosed,

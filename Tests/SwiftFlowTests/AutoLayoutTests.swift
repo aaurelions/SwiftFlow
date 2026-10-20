@@ -119,8 +119,10 @@ struct AutoLayoutTests {
       #expect(result[1].position.y > result[0].position.y)
     }
     for iterations in [0, -1] {
-      #expect(computeAutoLayout(
-        nodes: nodes, edges: edges, algorithm: .forceDirected(iterations: iterations)).isEmpty)
+      #expect(
+        computeAutoLayout(
+          nodes: nodes, edges: edges, algorithm: .forceDirected(iterations: iterations)
+        ).isEmpty)
     }
   }
 
@@ -144,7 +146,8 @@ struct AutoLayoutTests {
     ]
     for direction in [LayoutDirection.topToBottom, .leftToRight] {
       let result = applyNodeChanges(
-        computeAutoLayout(nodes: nodes, edges: edges,
+        computeAutoLayout(
+          nodes: nodes, edges: edges,
           algorithm: .tree(direction: direction), nodeSizes: sizes), nodes: nodes)
       if direction == .topToBottom {
         #expect(result[2].position.x - result[1].position.x == 450)

@@ -27,14 +27,14 @@ public struct Node<NodeData: Equatable & Sendable>: Identifiable, Equatable, Sen
 | `deletable`      | `Bool`        | `true`      | Whether the node can be deleted (keyboard or `deleteElements`)      |
 | `expandable`     | `Bool`        | `false`     | Whether the node can expand/collapse sub-nodes    |
 | `expanded`       | `Bool`        | `true`      | Current expanded state (if expandable)            |
-| `expandParent`   | `Bool`        | `false`     | Expand to fill parent bounds                      |
-| `focusable`      | `Bool`        | `true`      | Whether the node can receive focus                |
+| `expandParent`   | `Bool`        | `false`     | Grow the parent while dragging this child past its edges |
+| `focusable`      | `Bool`        | `true`      | Whether the node can receive keyboard focus (Tab) |
 | `zIndex`         | `Int`         | `0`         | Render order (higher = on top)                    |
-| `origin`         | `NodeOrigin`  | `.topLeft`  | Anchor point for positioning                      |
-| `sourcePosition` | `Position?`   | `nil`       | Default position for source handles               |
-| `targetPosition` | `Position?`   | `nil`       | Default position for target handles               |
+| `origin`         | `NodeOrigin`  | `.topLeft`  | Anchor point: node top-left = `position - origin * size`. Wins over the canvas `nodeOrigin` when not `.topLeft`. Child positions are relative to the parent's top-left |
+| `sourcePosition` | `Position?`   | `nil`       | Side edges attach to when the node has no rendered source handle (default right) |
+| `targetPosition` | `Position?`   | `nil`       | Side edges attach to when the node has no rendered target handle (default left) |
 | `extent`         | `NodeExtent?` | `nil`       | Drag constraint (`.parent` or `.coordinateExtent`)|
-| `style`          | `NodeStyle?`  | `nil`       | Per-node visual style overrides                   |
+| `style`          | `NodeStyle?`  | `nil`       | Per-node visual style applied by the canvas (background, border, radius, opacity) |
 
 ### Initialization
 
@@ -82,12 +82,12 @@ public struct Edge<EdgeData: Equatable & Sendable & Hashable>: Identifiable, Equ
 | `markerStart`     | `EdgeMarker?` | `nil`       | Start endpoint marker                              |
 | `markerEnd`       | `EdgeMarker?` | `nil`       | End endpoint marker                                |
 | `zIndex`          | `Int`         | `0`         | Render order                                       |
-| `reconnectable`   | `Bool`        | `false`     | Whether endpoints can be dragged to reconnect      |
+| `reconnectable`   | `Bool`        | `false`     | Whether endpoints can be dragged to reconnect (also requires `onReconnect`, selection and `nodesConnectable`) |
 | `deletable`       | `Bool`        | `true`      | Deletable via keyboard or `deleteElements`                             |
-| `focusable`       | `Bool`        | `true`      | Whether the edge can receive focus                 |
-| `interactionWidth`| `CGFloat`     | `20`        | Width of invisible hit-test area                   |
+| `focusable`       | `Bool`        | `true`      | Whether the edge can receive keyboard focus (Tab)  |
+| `interactionWidth`| `CGFloat`     | `20`        | Width of the invisible hit area used for selection and clicks |
 | `data`            | `EdgeData?`   | `nil`       | User-defined data                                  |
-| `style`           | `EdgeStyle?`  | `nil`       | Per-edge visual style overrides                    |
+| `style`           | `EdgeStyle?`  | `nil`       | Per-edge visual style overrides (stroke color, width, opacity) |
 
 ### EdgeType
 
@@ -97,7 +97,7 @@ public struct Edge<EdgeData: Equatable & Sendable & Hashable>: Identifiable, Equ
 | `.straight`              | Direct straight line                           |
 | `.step`                  | Right-angle path with sharp corners            |
 | `.smoothstep`            | Right-angle path with rounded corners          |
-| `.simplebezier`          | Quadratic bezier with single control point     |
+| `.simplebezier`          | Cubic curve with control points at the axis midpoint     |
 
 ### EdgeMarker
 
@@ -123,10 +123,10 @@ public struct EdgeMarker: Equatable, Sendable, Codable, Hashable {
 
 ```swift
 // Basic edge
-let edge = Edge<EmptyEdgeData>(id: "e1", source: "1", target: "2")
+let edge = FlowEdge<EmptyEdgeData>(id: "e1", source: "1", target: "2")
 
 // Styled edge with arrowhead and label
-let edge = Edge<EmptyEdgeData>(
+let edge = FlowEdge<EmptyEdgeData>(
     id: "e1-2",
     source: "1", target: "2",
     sourceHandle: "out", targetHandle: "in",
@@ -151,8 +151,8 @@ let edge = Edge<FlowData>(
 Use `EmptyEdgeData` when edges don't need custom data:
 
 ```swift
-@State var edges: [Edge<EmptyEdgeData>] = [
-    Edge(id: "e1", source: "1", target: "2")
+@State var edges: [FlowEdge<EmptyEdgeData>] = [
+    FlowEdge(id: "e1", source: "1", target: "2")
 ]
 ```
 

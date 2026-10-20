@@ -4,7 +4,7 @@
 
 | Platform | Minimum Version |
 |----------|-----------------|
-| iOS      | 16.0+           |
+| iOS      | 17.0+           |
 | macOS    | 13.0+           |
 | Swift    | 6.1+            |
 
@@ -30,7 +30,7 @@ import PackageDescription
 let package = Package(
     name: "MyApp",
     platforms: [
-        .iOS(.v16),
+        .iOS(.v17),
         .macOS(.v13),
     ],
     dependencies: [
@@ -83,7 +83,7 @@ Full keyboard shortcut support including:
 
 ### iOS
 
-Keyboard shortcuts are limited on iOS. Primarily designed for touch interaction:
+Keyboard shortcuts are limited on iOS. Primarily designed for touch interaction; with a hardware keyboard, focusable nodes and edges take system focus and Return/Space selects, Escape deselects:
 - Tap to select nodes and edges
 - Drag to move nodes
 - Pinch to zoom

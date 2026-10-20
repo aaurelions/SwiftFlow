@@ -16,9 +16,9 @@ struct FlowEditor: View {
         Node(id: "2", position: XYPosition(x: 300, y: 100), data: "Process"),
         Node(id: "3", position: XYPosition(x: 500, y: 100), data: "End"),
     ]
-    @State var edges: [Edge<EmptyEdgeData>] = [
-        Edge(id: "e1-2", source: "1", target: "2"),
-        Edge(id: "e2-3", source: "2", target: "3"),
+    @State var edges: [FlowEdge<EmptyEdgeData>] = [
+        FlowEdge(id: "e1-2", source: "1", target: "2"),
+        FlowEdge(id: "e2-3", source: "2", target: "3"),
     ]
 
     var body: some View {

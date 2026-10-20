@@ -70,7 +70,7 @@ Complete reference of all public types in SwiftFlow.
 | --------------------- | ---------------------------------------------- |
 | `SwiftFlowTheme`      | Comprehensive theme with presets               |
 | `FitViewOptions`      | Fit-view animation and constraint configuration|
-| `DefaultEdgeOptions`  | Default properties for newly created edges     |
+| `DefaultEdgeOptions`  | Default edge properties, applied when rendering and by `addEdge` |
 | `KeyboardShortcuts`   | Key codes and nudge distances                  |
 | `AccessibilityConfig` | VoiceOver behavior and label texts             |
 | `NodeStyle`           | Per-node visual overrides                      |

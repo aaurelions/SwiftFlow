@@ -63,7 +63,7 @@ onConnect: { connection in
 onReconnect: ((Edge<EdgeData>, Connection) -> Void)?
 ```
 
-Called when a user drags a reconnectable edge endpoint to a new handle:
+Called when a user drops a dragged edge endpoint on a valid handle. Endpoint anchors only appear when `onReconnect` is set, the edge is `reconnectable` and selected, and `nodesConnectable` is on. The callback receives the original edge; the edge is not removed when the drag starts, dropping elsewhere leaves it unchanged, and `onConnect` is not used as a fallback:
 
 ```swift
 onReconnect: { edge, connection in
@@ -129,7 +129,7 @@ onSelectionChange: { selectedNodes, selectedEdges in
 onPaneClick: (() -> Void)?
 ```
 
-Called when the user taps empty canvas space:
+Called when the user taps empty canvas space (also when selection is disabled):
 
 ```swift
 onPaneClick: {
@@ -148,7 +148,7 @@ onNodeClick: ((Node<NodeData>) -> Void)?
 onNodeDoubleClick: ((Node<NodeData>) -> Void)?
 ```
 
-Called when a node is tapped or double-tapped:
+Called when a node is tapped or double-tapped. `onNodeClick` fires even when selection is disabled:
 
 ```swift
 onNodeClick: { node in
@@ -215,7 +215,7 @@ onEdgeClick: ((Edge<EdgeData>) -> Void)?
 onEdgeDoubleClick: ((Edge<EdgeData>) -> Void)?
 ```
 
-Double-clicking an edge also deletes it by default (before the callback fires). You can prevent this by not allowing selection (`elementsSelectable: false`).
+Double-clicking an edge only calls `onEdgeDoubleClick`; it does not delete the edge. `onEdgeClick` fires even when `elementsSelectable` is `false`.
 
 ### onEdgeMouseEnter / onEdgeMouseLeave
 

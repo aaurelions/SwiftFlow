@@ -56,14 +56,14 @@ struct ConnectionValidationExample: View {
         ),
     ]
 
-    @State var edges: [Edge<EmptyEdgeData>] = [
-        Edge(id: "e1", source: "in1", target: "proc1",
+    @State var edges: [FlowEdge<EmptyEdgeData>] = [
+        FlowEdge(id: "e1", source: "in1", target: "proc1",
              type: .smoothstep, markerEnd: .arrowClosed),
-        Edge(id: "e2", source: "in2", target: "proc2",
+        FlowEdge(id: "e2", source: "in2", target: "proc2",
              type: .smoothstep, markerEnd: .arrowClosed),
-        Edge(id: "e3", source: "proc1", target: "out1",
+        FlowEdge(id: "e3", source: "proc1", target: "out1",
              type: .smoothstep, markerEnd: .arrowClosed),
-        Edge(id: "e4", source: "proc2", target: "out1",
+        FlowEdge(id: "e4", source: "proc2", target: "out1",
              type: .smoothstep, markerEnd: .arrowClosed),
     ]
 

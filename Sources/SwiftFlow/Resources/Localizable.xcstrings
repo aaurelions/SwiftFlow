@@ -1,0 +1,303 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ from %@ to %@": {
+      "comment": "Edge label: role, source node ID, target node ID",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ from %2$@ to %3$@"
+          }
+        }
+      }
+    },
+    "%lld edges selected": {
+      "comment": "Announcement of the number of selected edges",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld edge selected"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld edges selected"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld nodes and %lld edges selected": {
+      "comment": "Announcement of the number of selected nodes and edges",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$#@nodes@ and %2$#@edges@ selected"
+          },
+          "substitutions": {
+            "nodes": {
+              "argNum": 1,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg node"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg nodes"
+                    }
+                  }
+                }
+              }
+            },
+            "edges": {
+              "argNum": 2,
+              "formatSpecifier": "lld",
+              "variations": {
+                "plural": {
+                  "one": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg edge"
+                    }
+                  },
+                  "other": {
+                    "stringUnit": {
+                      "state": "translated",
+                      "value": "%arg edges"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld nodes selected": {
+      "comment": "Announcement of the number of selected nodes",
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld node selected"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld nodes selected"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Connected %@ to %@": {
+      "comment": "Announcement after connecting two nodes; arguments are node IDs",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected %1$@ to %2$@"
+          }
+        }
+      }
+    },
+    "Drag to create a connection": {
+      "comment": "VoiceOver hint of a connection handle",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to create a connection"
+          }
+        }
+      }
+    },
+    "Fit view": {
+      "comment": "Fit-view button label",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fit view"
+          }
+        }
+      }
+    },
+    "Graph controls": {
+      "comment": "Label of the controls panel",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graph controls"
+          }
+        }
+      }
+    },
+    "Graph edge": {
+      "comment": "VoiceOver role of an edge",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graph edge"
+          }
+        }
+      }
+    },
+    "Graph minimap": {
+      "comment": "Label of the minimap",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graph minimap"
+          }
+        }
+      }
+    },
+    "Graph node": {
+      "comment": "VoiceOver role of a node",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Graph node"
+          }
+        }
+      }
+    },
+    "Input handle %@": {
+      "comment": "Target handle label",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Input handle %@"
+          }
+        }
+      }
+    },
+    "Node": {
+      "comment": "VoiceOver hint of a node when keyboard interaction is disabled",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Node"
+          }
+        }
+      }
+    },
+    "Output handle %@": {
+      "comment": "Source handle label",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Output handle %@"
+          }
+        }
+      }
+    },
+    "Press Enter to select": {
+      "comment": "VoiceOver hint of an edge",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press Enter to select"
+          }
+        }
+      }
+    },
+    "Press Enter to select, drag to move": {
+      "comment": "VoiceOver hint of a node",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press Enter to select, drag to move"
+          }
+        }
+      }
+    },
+    "Reset zoom to 100 percent": {
+      "comment": "Label of the zoom level button",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset zoom to 100 percent"
+          }
+        }
+      }
+    },
+    "Selection cleared": {
+      "comment": "Announcement when nothing is selected anymore",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selection cleared"
+          }
+        }
+      }
+    },
+    "Toggle interactivity": {
+      "comment": "Interactivity lock button label",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toggle interactivity"
+          }
+        }
+      }
+    },
+    "Zoom in": {
+      "comment": "Zoom-in button label",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom in"
+          }
+        }
+      }
+    },
+    "Zoom out": {
+      "comment": "Zoom-out button label",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zoom out"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

@@ -39,11 +39,14 @@ public struct Panel<Content: View>: View {
   public var body: some View {
     content()
       .padding(8)
-      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+      .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.alignment)
   }
+}
 
-  private var alignment: Alignment {
-    switch position {
+extension PanelPosition {
+  /// The SwiftUI alignment that places an overlay at this position.
+  var alignment: Alignment {
+    switch self {
     case .topLeft: return .topLeading
     case .topCenter: return .top
     case .topRight: return .topTrailing

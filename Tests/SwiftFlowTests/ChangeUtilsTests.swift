@@ -124,4 +124,37 @@ struct ChangeUtilsTests {
     #expect(result[0].target == "3")
     #expect(result[0].label == "updated")
   }
+
+  // MARK: - Ordering and Lookup
+
+  @Test func changesAfterReplaceWithNewIdUseTheNewId() {
+    let nodes = [Node(id: "a", position: .zero, data: "A")]
+    let renamed = Node(id: "b", position: .zero, data: "B")
+    let result = applyNodeChanges(
+      [
+        .replace(id: "a", item: renamed),
+        .position(id: "b", position: XYPosition(x: 5, y: 6)),
+        .position(id: "a", position: XYPosition(x: 99, y: 99)),
+      ],
+      nodes: nodes)
+    #expect(result.map(\.id) == ["b"])
+    #expect(result[0].position == XYPosition(x: 5, y: 6))
+  }
+
+  @Test func addAfterRemoveOfSameId() {
+    let nodes = [Node(id: "a", position: .zero, data: "old")]
+    let result = applyNodeChanges(
+      [.remove(id: "a"), .add(item: Node(id: "a", position: .zero, data: "new"))], nodes: nodes)
+    #expect(result.map(\.data) == ["new"])
+  }
+
+  @Test func manyChangesKeepOrder() {
+    let nodes = (0..<100).map { Node(id: "\($0)", position: .zero, data: $0) }
+    let changes = (0..<100).reversed().map {
+      NodeChange<Int>.position(id: "\($0)", position: XYPosition(x: CGFloat($0), y: 0))
+    }
+    let result = applyNodeChanges(changes, nodes: nodes)
+    #expect(result.map(\.id) == nodes.map(\.id))
+    #expect(result.allSatisfy { $0.position.x == CGFloat($0.data) })
+  }
 }

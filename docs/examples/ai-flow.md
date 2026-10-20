@@ -14,7 +14,7 @@ Add SwiftFlow to your project via Xcode: **File → Add Package Dependencies...*
 https://github.com/aaurelions/SwiftFlow.git
 ```
 
-Choose version `0.2.0` or the latest release.
+Choose version `0.3.0` or the latest release.
 
 Alternatively, add it to your `Package.swift`:
 
@@ -25,11 +25,11 @@ import PackageDescription
 let package = Package(
     name: "AI_FLOW",
     platforms: [
-        .iOS(.v16),
+        .iOS(.v17),
         .macOS(.v13)
     ],
     dependencies: [
-        .package(url: "https://github.com/aaurelions/SwiftFlow.git", from: "0.2.0")
+        .package(url: "https://github.com/aaurelions/SwiftFlow.git", from: "0.3.0")
     ],
     targets: [
         .executableTarget(
@@ -1934,7 +1934,7 @@ struct WindowConfigurator: NSViewRepresentable {
 
 | Platform | Minimum Version |
 |----------|-----------------|
-| iOS      | 16.0+           |
+| iOS      | 17.0+           |
 | macOS    | 13.0+           |
 | Swift    | 6.1+            |
 

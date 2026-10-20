@@ -37,7 +37,7 @@ public func applyEdgeChanges<EdgeData: Equatable & Sendable & Hashable>(
 Same pattern for edges:
 
 ```swift
-@State var edges: [Edge<EmptyEdgeData>] = [...]
+@State var edges: [FlowEdge<EmptyEdgeData>] = [...]
 
 SwiftFlow(
     nodes: nodes, edges: edges,
@@ -57,7 +57,7 @@ public func addEdge<EdgeData: Equatable & Sendable & Hashable>(
 ) -> [Edge<EdgeData>]
 ```
 
-Creates a new edge from a `Connection` and appends it to the edge array. Duplicate prevention: does not add if an edge with the same source-target-handle combination already exists.
+Creates a new edge from a `Connection` and appends it to the edge array. The new edge gets the React Flow id format `xy-edge__{source}{sourceHandle}-{target}{targetHandle}`. Duplicate prevention: does not add if an edge with the same source, target and handles already exists (`nil` and `""` handles are treated as equal). `defaults`, when given, is applied to the new edge.
 
 ```swift
 onConnect: { connection in
@@ -155,7 +155,7 @@ onEdgesChange?([.selection(id: "edge-1", selected: true)])
 onEdgesChange?([.remove(id: "edge-1")])
 
 // Add a new edge
-let newEdge = Edge<EmptyEdgeData>(id: "e-new", source: "1", target: "2")
+let newEdge = FlowEdge<EmptyEdgeData>(id: "e-new", source: "1", target: "2")
 onEdgesChange?([.add(item: newEdge)])
 
 // Replace an edge

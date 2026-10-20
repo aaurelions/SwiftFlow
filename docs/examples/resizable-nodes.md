@@ -40,10 +40,10 @@ struct ResizableNodesExample: View {
         ),
     ]
 
-    @State var edges: [Edge<EmptyEdgeData>] = [
-        Edge(id: "e1", source: "note1", target: "note2",
+    @State var edges: [FlowEdge<EmptyEdgeData>] = [
+        FlowEdge(id: "e1", source: "note1", target: "note2",
              type: .smoothstep, markerEnd: .arrowClosed),
-        Edge(id: "e2", source: "note2", target: "card1",
+        FlowEdge(id: "e2", source: "note2", target: "card1",
              type: .smoothstep, markerEnd: .arrowClosed),
     ]
 

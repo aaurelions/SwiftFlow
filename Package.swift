@@ -3,8 +3,9 @@ import PackageDescription
 
 let package = Package(
   name: "SwiftFlow",
+  defaultLocalization: "en",
   platforms: [
-    .iOS(.v16),
+    .iOS(.v17),
     .macOS(.v13),
   ],
   products: [
@@ -16,7 +17,8 @@ let package = Package(
   targets: [
     .target(
       name: "SwiftFlow",
-      path: "Sources/SwiftFlow"
+      path: "Sources/SwiftFlow",
+      resources: [.process("Resources")]
     ),
     .testTarget(
       name: "SwiftFlowTests",

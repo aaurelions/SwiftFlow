@@ -5,6 +5,16 @@ import SwiftUI
 /// Customize colors, sizes, and fonts for edges, nodes, handles,
 /// the selection box, canvas background, minimap, snap lines, and edge labels.
 ///
+/// Where each group applies:
+/// - **Edges / edge labels**: default edge rendering. Per-edge `EdgeStyle` values win.
+/// - **Nodes**: the selection outline drawn around selected nodes, and the
+///   background behind nodes that opt into library styling with `Node.style`.
+///   Set `nodeSelectedBorderWidth` to `0` when node views draw their own selection.
+/// - **Handles**: `Handle` views that do not pass an explicit color.
+/// - **Selection box, snap lines, canvas, grid**: canvas chrome. The grid is
+///   drawn when `SwiftFlow(backgroundVariant:)` is set.
+/// - **Minimap**: `MiniMap` defaults when no explicit colors are passed.
+///
 /// Use `SwiftFlowTheme.default` for the standard appearance, or create
 /// a custom theme:
 ///
@@ -42,6 +52,7 @@ public struct SwiftFlowTheme: Equatable, Sendable {
   public var gridSpacing: CGFloat
 
   // MARK: Minimap
+  /// Opacity of the minimap background material.
   public var minimapBackgroundOpacity: CGFloat
   public var minimapNodeColor: Color
   public var minimapSelectedNodeColor: Color
@@ -77,8 +88,8 @@ public struct SwiftFlowTheme: Equatable, Sendable {
     snapLineColor: Color = .blue.opacity(0.5),
     snapLineWidth: CGFloat = 1,
     edgeLabelFont: Font = .system(size: 11),
-    edgeLabelColor: Color = .primary,
-    edgeLabelBackgroundColor: Color = Color(white: 0.2)
+    edgeLabelColor: Color = .black,
+    edgeLabelBackgroundColor: Color = .white
   ) {
     self.edgeColor = edgeColor
     self.edgeSelectedColor = edgeSelectedColor
@@ -126,21 +137,6 @@ public struct SwiftFlowTheme: Equatable, Sendable {
     edgeLabelBackgroundColor: Color(white: 0.2)
   )
 
-  /// A light theme suitable for light mode interfaces.
-  public static let light = SwiftFlowTheme(
-    edgeColor: .gray.opacity(0.6),
-    edgeSelectedColor: .blue,
-    nodeBackgroundColor: .white,
-    nodeSelectedBorderColor: .blue,
-    handleColor: .gray,
-    selectionBoxColor: .blue.opacity(0.1),
-    selectionBoxBorderColor: .blue.opacity(0.5),
-    canvasBackgroundColor: .clear,
-    gridColor: .gray.opacity(0.3),
-    minimapNodeColor: .gray.opacity(0.5),
-    minimapSelectedNodeColor: .blue,
-    snapLineColor: .blue.opacity(0.5),
-    edgeLabelColor: .primary,
-    edgeLabelBackgroundColor: Color(white: 0.2)
-  )
+  /// A light theme suitable for light mode interfaces (identical to `default`).
+  public static let light = SwiftFlowTheme()
 }

@@ -2,17 +2,17 @@
 name: SwiftFlow
 description: Comprehensive documentation and mapping between ReactFlow (TypeScript) and SwiftFlow (SwiftUI). Use this skill to translate ReactFlow concepts to SwiftFlow or to build native node-based graph editors in iOS and macOS using familiar ReactFlow patterns.
 license: MIT
-compatibility: iOS 16.0+, macOS 13.0+, Swift 6.1+
+compatibility: iOS 17.0+, macOS 13.0+, Swift 6.1+
 metadata:
   author: A.Aurelions
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # SwiftFlow Documentation
 
 SwiftFlow is a native SwiftUI node-based graph editor whose architecture and API surface are inspired by [React Flow](https://reactflow.dev). This document provides a complete API reference, ReactFlow mapping tables, and practical usage examples.
 
-Requirements: iOS 16.0+, macOS 13.0+, Swift 6.1+. Zero external dependencies.
+Requirements: iOS 17.0+, macOS 13.0+, Swift 6.1+. Zero external dependencies.
 
 ---
 
@@ -98,27 +98,31 @@ All parameters with defaults (from actual `init`):
 | `keyboardShortcuts` | `KeyboardShortcuts` | `.default` |
 | `accessibilityConfig` | `AccessibilityConfig` | `.default` |
 
+Behavior notes: `panOnScrollMode` restricts scroll panning only (drag panning is free). `zoomOnDoubleClick` double-tap zooms in by 2x around the view center. Tapping a node/edge selects it and deselects everything else; hold Command (macOS) to multi-select. `zIndexMode`: `.auto` and `.basic` raise selected nodes, `.manual` uses `zIndex` only. `defaultEdgeOptions` is applied when rendering: a default fills a property only while the edge still has its initializer default (`type == .default`, `animated == false`, `markerStart`/`markerEnd == nil`). `nodeOrigin` and `Node.origin` are applied (node top-left = `position - origin * size`; `Node.origin` wins when not `.topLeft`); child positions are relative to the parent's top-left. `fitView` runs once when the canvas has a size and all visible nodes are measured. `accessibilityConfig` drives node/edge labels and hints, Handle hints, Controls button labels, the MiniMap label, and VoiceOver announcements of selection changes and connections (`selectionAnnouncement`, `connectionAnnouncement`); its defaults are localized from the package string catalog. `Node.style` is applied by the canvas (background falls back to `theme.nodeBackgroundColor`); selected nodes get an outline from `theme.nodeSelectedBorderColor`/`nodeSelectedBorderWidth` (set the width to `0` if node views draw their own selection). `Edge.interactionWidth` sets the hit area and `EdgeStyle.opacity` is applied.
+
+Keyboard (macOS): Cmd+A select all, Delete/Backspace delete (deletable nodes plus deletable descendants via `parentId` and all connected edges), Cmd+C/Cmd+V copy/paste (pasted edges keep all properties; children of copied parents keep relative position, others offset by 50), Cmd+Z undo / Cmd+Shift+Z redo (covers deletions and pastes), arrow keys nudge (respects `nodesDraggable` and `Node.draggable`), Tab/Shift+Tab move focus between focusable nodes and edges (an off-screen node is panned into view), Return/Space select the focused element, Escape deselects. Keys reach the canvas after a click inside it and never while a text field is being edited. `Node.expandParent` grows the parent while dragging a child past its edges (past the top/left the parent moves and its children shift).
+
 ### Event Callbacks (complete list)
 | Callback | Signature | Trigger |
 |----------|-----------|---------|
-| `onPaneClick` | `() -> Void` | Canvas background tap |
+| `onPaneClick` | `() -> Void` | Canvas background tap (fires even when selection is disabled) |
 | `onViewportChange` | `(Viewport) -> Void` | Camera moved |
 | `onSelectionChange` | `([Node<T>], [Edge<E>]) -> Void` | Selection changed |
 | `isValidConnection` | `(Connection) -> Bool` | Before accepting connection |
 | `onNodeDragStart` | `(Node<T>) -> Void` | Node drag began |
 | `onNodeDrag` | `(Node<T>) -> Void` | Node dragging |
 | `onNodeDragStop` | `(Node<T>) -> Void` | Node drag ended |
-| `onNodeClick` | `(Node<T>) -> Void` | Node tapped |
+| `onNodeClick` | `(Node<T>) -> Void` | Node tapped (fires even when selection is disabled) |
 | `onNodeDoubleClick` | `(Node<T>) -> Void` | Node double-tapped |
-| `onEdgeClick` | `(Edge<E>) -> Void` | Edge tapped |
-| `onEdgeDoubleClick` | `(Edge<E>) -> Void` | Edge double-tapped |
+| `onEdgeClick` | `(Edge<E>) -> Void` | Edge tapped (fires even when selection is disabled) |
+| `onEdgeDoubleClick` | `(Edge<E>) -> Void` | Edge double-tapped (does not delete the edge) |
 | `onConnectStart` | `(OnConnectStartParams) -> Void` | Connection drag began |
 | `onConnectEnd` | `() -> Void` | Connection drag ended |
 | `onBeforeDelete` | `([Node<T>], [Edge<E>]) async -> BeforeDeleteResult?` | Pre-deletion validation |
 | `onNodesDelete` | `([Node<T>]) -> Void` | Nodes deleted |
 | `onEdgesDelete` | `([Edge<E>]) -> Void` | Edges deleted |
 | `onDelete` | `([Node<T>], [Edge<E>]) -> Void` | After deletion completes |
-| `onReconnect` | `(Edge<E>, Connection) -> Void` | Edge reconnected |
+| `onReconnect` | `(Edge<E>, Connection) -> Void` | Reconnect drop on a valid handle; receives the original edge. Anchors need `onReconnect`, `reconnectable`, selected edge, `nodesConnectable`. Use `edges = reconnectEdge(old, conn, edges)` |
 | `onMoveStart` | `(Viewport) -> Void` | Viewport move began |
 | `onMove` | `(Viewport) -> Void` | Viewport moving |
 | `onMoveEnd` | `(Viewport) -> Void` | Viewport move ended |
@@ -143,9 +147,9 @@ All parameters with defaults (from actual `init`):
 ### Handle
 ```swift
 Handle(nodeId: String, id: String, type: HandleType = .source, position: Position,
-       color: Color = .gray, isConnectable: Bool = true)
+       color: Color? = nil, isConnectable: Bool = true)
 ```
-Place inside node views. `id` and `position` are required. `type`: `.source` or `.target`. `position`: `.top`, `.bottom`, `.left`, `.right`.
+Place inside node views. `id` and `position` are required. `type`: `.source` or `.target`. `position`: the node side the handle sits on (`.top`, `.bottom`, `.left`, `.right`); edges are routed using it. `color` `nil` uses `theme.handleColor`; size/border come from `theme.handleSize`/`handleBorderColor`. `isConnectable: false` is respected. An edge with a `nil` handle id attaches to the first handle of that type; with no rendered handle it attaches to the center of the side given by `Node.sourcePosition`/`targetPosition` (default right/left).
 
 ### Background
 ```swift
@@ -168,11 +172,12 @@ ControlButton(action: () -> Void) { content }  // Single control button
 
 ### MiniMap
 ```swift
-MiniMap(nodeColor: = .gray.opacity(0.5), nodeColorMapper: ((MiniMapNodeProps) -> Color)? = nil,
-        selectedNodeColor: = .blue, width: CGFloat = 150, height: CGFloat = 100,
+MiniMap(nodeColor: Color? = nil, nodeColorMapper: ((MiniMapNodeProps) -> Color)? = nil,
+        selectedNodeColor: Color? = nil, nodeStrokeColor: Color = .clear, nodeStrokeWidth: CGFloat = 0,
+        nodeBorderRadius: CGFloat = 1, maskColor: Color = .gray.opacity(0.1), width: CGFloat = 150, height: CGFloat = 100,
         pannable: Bool = true, zoomable: Bool = false, position: PanelPosition = .bottomRight)
 ```
-Supports `nodeColorMapper` for dynamic coloring, or a custom `nodeContent` ViewBuilder for per-node rendering. Drag to pan the main viewport (`pannable`, default `true`); pinch/magnify to zoom it (`zoomable`, default `false`). Both gestures are active only while the canvas is interactive.
+`nodeColor`/`selectedNodeColor` default to `theme.minimapNodeColor`/`minimapSelectedNodeColor`; `theme.minimapBackgroundOpacity` applies to its material background; `maskColor` covers the area outside the visible viewport. Supports `nodeColorMapper` for dynamic coloring, or a custom `nodeContent` ViewBuilder for per-node rendering. Drag to pan the main viewport (`pannable`, default `true`); pinch/magnify to zoom it (`zoomable`, default `false`). Both gestures are active only while the canvas is interactive.
 
 ### Panel
 ```swift
@@ -183,8 +188,9 @@ Panel(position: PanelPosition = .topRight) { content }
 ### NodeToolbar
 ```swift
 NodeToolbar(nodeId: String? = nil, isVisible: Bool = true, position: ToolbarPosition = .top,
-            align: ToolbarAlign = .center, offset: CGFloat = 8) { content }
+            align: ToolbarAlign = .center, offset: CGFloat = 10) { content }
 ```
+Attach as an overlay of the node view so it positions relative to it: `.overlay { NodeToolbar(isVisible: node.selected, position: .top) { ... } }`. `position`, `align` and `offset` are honored.
 `ToolbarPosition`: `.top`, `.bottom`, `.left`, `.right`. `ToolbarAlign`: `.start`, `.center`, `.end`.
 
 ### EdgeToolbar
@@ -203,7 +209,7 @@ NodeResizer(nodeId: String, direction: ResizeDirection = .bottomRight,
             onResizeStart: (() -> Void)? = nil, onResizeEnd: (() -> Void)? = nil,
             shouldResize: ((CGFloat, CGFloat) -> Bool)? = nil)
 ```
-Single resize handle. 8 directions via `ResizeDirection`.
+Renders ONE handle at `direction` (wrapper around `NodeResizeControl`); use several instances for several handles. Inside a canvas it resizes the node itself, like React Flow: it reports `.dimensions` plus `.position` (for top/left handles, keeping the opposite edge fixed) through `onNodesChange`; `onResize` is a notification.
 
 ### NodeResizeControl
 ```swift
@@ -357,8 +363,8 @@ SwiftFlowProvider(nodes: [...], edges: [...]) { store in
 @StateObject var instance = SwiftFlowInstance()
 // Pass to SwiftFlow: swiftFlowInstance: instance
 // Methods:
-instance.zoomIn()
-instance.zoomOut()
+instance.zoomIn()   // x1.2 (also SwiftFlowState and Controls)
+instance.zoomOut()  // /1.2
 instance.zoomTo(1.5)
 instance.fitView(nodes: nodes, nodeSizes: instance.nodeSizes, options: FitViewOptions())
 instance.setCenter(x: 100, y: 200, zoom: 1.0)
@@ -368,7 +374,7 @@ instance.screenToFlowPosition(screenPoint)
 instance.flowToScreenPosition(flowPoint)
 instance.getNodesBounds(nodes: nodes, nodeSizes: sizes)
 instance.getViewportForBounds(bounds: rect, minZoom: 0.1, maxZoom: 1.5, padding: 80)
-instance.deleteElements(nodeIds: [...], edgeIds: [...])
+instance.deleteElements(nodeIds: [...], edgeIds: [...])  // deletable nodes + deletable descendants + connected edges
 ```
 Also: `@Environment(\.swiftFlowInstance)` and `@Environment(\.nodesInitialized)`.
 
@@ -392,6 +398,7 @@ flowState.zoomIn() / zoomOut() / zoomTo() / fitView() / setViewport()
 applyNodeChanges(_ changes: [NodeChange<T>], nodes: [Node<T>]) -> [Node<T>]
 applyEdgeChanges(_ changes: [EdgeChange<E>], edges: [Edge<E>]) -> [Edge<E>]
 addEdge(_ connection: Connection, edges: [Edge<E>], defaults: DefaultEdgeOptions? = nil) -> [Edge<E>]
+// ids use RF format "xy-edge__{source}{sourceHandle}-{target}{targetHandle}"; nil and "" handles are equal for duplicate detection
 reconnectEdge(_ oldEdge: Edge<E>, _ newConnection: Connection, _ edges: [Edge<E>]) -> [Edge<E>]
 ```
 
@@ -405,7 +412,7 @@ getConnectedEdges(nodes: [Node<T>], edges: [Edge<E>]) -> [Edge<E>]
 
 ### Geometry & Intersection
 ```swift
-getNodesBounds(nodes: [Node<T>], nodeSizes: [String: CGSize]) -> CGRect
+getNodesBounds(nodes: [Node<T>], nodeSizes: [String: CGSize]) -> CGRect  // resolves parent-relative positions; unmeasured nodes use width/height or 150x50
 getViewportForBounds(bounds: CGRect, viewportSize: CGSize, minZoom: CGFloat = 0.1, maxZoom: CGFloat = 4.0, padding: CGFloat = 80) -> Viewport
 getIntersectingNodes(node: Node<T>, nodes: [Node<T>], nodeSizes: [String: CGSize] = [:]) -> [Node<T>]
 isNodeIntersecting(node: Node<T>, otherNode: Node<T>, nodeSizes: [String: CGSize] = [:]) -> Bool
@@ -414,6 +421,7 @@ isEdge(_ element: Any, ofType: EdgeData.Type) -> Bool
 ```
 
 ### Edge Paths (simple variants)
+Port React Flow's algorithms exactly. These overloads without positions assume the source handle is on the right and the target on the left.
 ```swift
 getBezierPath(sourceX:, sourceY:, targetX:, targetY:) -> Path
 getSimpleBezierPath(sourceX:, sourceY:, targetX:, targetY:) -> Path
@@ -435,11 +443,13 @@ getSimpleBezierPath(sourceX:, sourceY:, sourcePosition:, targetX:, targetY:, tar
     -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetX: CGFloat, offsetY: CGFloat)
 getStepPath(sourceX:, sourceY:, sourcePosition:, targetX:, targetY:, targetPosition:)
     -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetX: CGFloat, offsetY: CGFloat)
-getSmoothStepPath(sourceX:, sourceY:, sourcePosition:, targetX:, targetY:, targetPosition:, borderRadius: 5)
+getSmoothStepPath(sourceX:, sourceY:, sourcePosition:, targetX:, targetY:, targetPosition:, borderRadius: 5, centerX: nil, centerY: nil, offset: 20)
     -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetX: CGFloat, offsetY: CGFloat)
 getEdgePath(type:, sourceX:, sourceY:, sourcePosition:, targetX:, targetY:, targetPosition:)
     -> (path: Path, labelX: CGFloat, labelY: CGFloat, offsetX: CGFloat, offsetY: CGFloat)
 ```
+
+`getStepPath` equals smooth step with `borderRadius: 0`. Bezier control offset is `0.5 * distance` along the handle axis, or `curvature * 25 * sqrt(-distance)` when the target is behind. `.straight` through `getEdgePath` returns the center label with offsets `abs(delta) / 2`. The canvas itself renders edges from each Handle's `position`.
 
 ### Auto Layout
 ```swift
@@ -473,7 +483,7 @@ t.edgeColor = .blue; t.handleColor = .orange
 SwiftFlow(..., theme: t) { ... }
 ```
 
-Key theme properties: `edgeColor`, `edgeSelectedColor`, `edgeWidth`, `edgeSelectedWidth`, `nodeBackgroundColor`, `nodeSelectedBorderColor`, `nodeSelectedBorderWidth`, `handleColor`, `handleBorderColor`, `handleSize`, `selectionBoxColor`, `selectionBoxBorderColor`, `canvasBackgroundColor`, `gridColor`, `gridSpacing`, `minimapBackgroundOpacity`, `minimapNodeColor`, `minimapSelectedNodeColor`, `snapLineColor`, `snapLineWidth`, `edgeLabelFont`, `edgeLabelColor`, `edgeLabelBackgroundColor`.
+`SwiftFlowTheme.light` is identical to `.default`. Default/light edge labels are black on white. Key theme properties: `edgeColor`, `edgeSelectedColor`, `edgeWidth`, `edgeSelectedWidth`, `nodeBackgroundColor`, `nodeSelectedBorderColor`, `nodeSelectedBorderWidth`, `handleColor`, `handleBorderColor`, `handleSize`, `selectionBoxColor`, `selectionBoxBorderColor`, `canvasBackgroundColor`, `gridColor`, `gridSpacing`, `minimapBackgroundOpacity`, `minimapNodeColor`, `minimapSelectedNodeColor`, `snapLineColor`, `snapLineWidth`, `edgeLabelFont`, `edgeLabelColor`, `edgeLabelBackgroundColor`.
 
 ---
 
@@ -488,7 +498,7 @@ Key theme properties: `edgeColor`, `edgeSelectedColor`, `edgeWidth`, `edgeSelect
 | `<MiniMap>` | `MiniMap()` | `nodeColorMapper` or custom `nodeContent` closure |
 | `<Panel position="top-right">` | `Panel(position: .topRight)` | 9 positions |
 | `<Handle type="source" position={Right}>` | `Handle(nodeId:node.id, id:"h1", type:.source, position:.right)` | Requires `nodeId` |
-| `<NodeToolbar>` | `NodeToolbar(position: .top) { ... }` | |
+| `<NodeToolbar>` | `.overlay { NodeToolbar(isVisible: node.selected, position: .top) { ... } }` | Positions relative to the overlaid node view |
 | `<EdgeToolbar>` | `EdgeToolbar(position: midpoint) { ... }` | |
 | `<NodeResizer>` | `NodeResizer(nodeId:node.id, ...)` | Single handle, 8 directions |
 | `<NodeResizeControl>` | `NodeResizeControl(nodeId:node.id, position:.bottomRight)` | |
@@ -560,7 +570,7 @@ Key theme properties: `edgeColor`, `edgeSelectedColor`, `edgeWidth`, `edgeSelect
 | Scroll zoom | `onScrollWheel` (NSEvent monitor) | — |
 | Hover events (`onNodeMouseEnter` etc.) | `onHover` | Not available |
 | Context menu | Right-click | Long press |
-| Keyboard shortcuts | Full support (NSEvent) | Limited |
+| Keyboard shortcuts | Full support (NSEvent) | Focus and selection keys with a hardware keyboard |
 | Cursor types (`flowCursor`) | NSCursor push/pop | No-op |
 
 ---

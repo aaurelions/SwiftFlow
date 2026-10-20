@@ -147,4 +147,17 @@ struct SerializationTests {
     #expect(decoded.style?.strokeWidth == 3)
     #expect(decoded.style?.opacity == 0.5)
   }
+
+  @Test func styleColorsRoundTripWithoutShift() throws {
+    let style = EdgeStyle(strokeColor: Color(red: 0.2, green: 0.4, blue: 0.6, opacity: 0.8))
+    let data = try JSONEncoder().encode(style)
+    let once = try JSONDecoder().decode(EdgeStyle.self, from: data)
+    let twice = try JSONDecoder().decode(
+      EdgeStyle.self, from: JSONEncoder().encode(once))
+    let components = try CodableColor(#require(twice.strokeColor))
+    #expect(abs(components.red - 0.2) < 0.001)
+    #expect(abs(components.green - 0.4) < 0.001)
+    #expect(abs(components.blue - 0.6) < 0.001)
+    #expect(abs(components.opacity - 0.8) < 0.001)
+  }
 }

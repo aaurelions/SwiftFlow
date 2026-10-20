@@ -56,7 +56,7 @@ public func fitView<T: Equatable & Sendable>(
 )
 ```
 
-Adjusts the viewport to frame all (or specific) nodes. Uses `FitViewOptions` for configuration. The fitted content is centered in the viewport, including when the computed zoom is capped by `maxZoom`.
+Adjusts the viewport to frame all (or specific) nodes. Uses `FitViewOptions` for configuration. Parent-relative child positions are resolved, and unmeasured nodes use their explicit `width`/`height` or 150×50. The fitted content is centered in the viewport, including when the computed zoom is capped by `maxZoom`.
 
 ```swift
 // Fit all visible nodes
@@ -103,7 +103,7 @@ public func zoomIn(animated: Bool = true)
 public func zoomOut(animated: Bool = true)
 ```
 
-Zoom in/out by 25% relative to the current zoom level.
+Zoom in/out by a factor of 1.2 relative to the current zoom level.
 
 ```swift
 instance.zoomIn()
@@ -132,7 +132,7 @@ instance.reset(animated: false)
 public func deleteElements(nodeIds: [String] = [], edgeIds: [String] = [])
 ```
 
-Deletes the specified nodes and edges through the attached canvas. Deleting a node also removes every incident edge; explicitly requested elements are removed only when their `deletable` flag is `true`.
+Deletes the specified nodes and edges through the attached canvas. Requested elements are removed only when their `deletable` flag is `true`; deletable nodes are removed together with their deletable descendants (the `parentId` chain) and all connected edges.
 
 ```swift
 Button("Delete Selected Node") {
@@ -180,7 +180,7 @@ public func getNodesBounds<T: Equatable & Sendable>(
 ) -> CGRect
 ```
 
-Returns the bounding rectangle of the given nodes, respecting their measured sizes.
+Returns the bounding rectangle of the visible nodes, respecting their measured sizes. Parent-relative child positions are resolved; unmeasured nodes use their explicit `width`/`height` or 150×50.
 
 ```swift
 let bounds = instance.getNodesBounds(nodes: selectedNodes, nodeSizes: instance.nodeSizes)

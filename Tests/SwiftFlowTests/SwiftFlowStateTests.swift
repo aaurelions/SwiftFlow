@@ -116,7 +116,7 @@ struct SwiftFlowStateTests {
     var appliedViewport: Viewport?
     state.applyViewport = { vp, _ in appliedViewport = vp }
     state.zoomIn()
-    #expect(appliedViewport?.zoom == 1.25)
+    #expect(appliedViewport?.zoom == 1.2)
   }
 
   @MainActor

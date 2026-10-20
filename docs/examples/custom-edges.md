@@ -21,8 +21,8 @@ struct CustomEdgesExample: View {
         Node(id: "3", position: XYPosition(x: 400, y: 300), data: EdgeExampleData(label: "Target B")),
     ]
 
-    @State var edges: [Edge<EmptyEdgeData>] = [
-        Edge(
+    @State var edges: [FlowEdge<EmptyEdgeData>] = [
+        FlowEdge(
             id: "e1-2",
             source: "1", target: "2",
             type: .bezier,
@@ -30,7 +30,7 @@ struct CustomEdgesExample: View {
             animated: true,
             markerEnd: EdgeMarker(type: .arrowClosed)
         ),
-        Edge(
+        FlowEdge(
             id: "e1-3",
             source: "1", target: "3",
             type: .smoothstep,
@@ -127,7 +127,7 @@ struct CustomEdgesExample: View {
 | `.straight`     | Direct line                              | Simple connections         |
 | `.step`         | Right-angle steps (sharp corners)        | Circuit/organization charts|
 | `.smoothstep`   | Right-angle steps (rounded)              | Clean orthogonal routing   |
-| `.simplebezier` | Quadratic curve with one control point   | Simple curved connections  |
+| `.simplebezier` | Cubic curve with control points at the axis midpoint   | Simple curved connections  |
 
 ## Edge Properties for Interaction
 

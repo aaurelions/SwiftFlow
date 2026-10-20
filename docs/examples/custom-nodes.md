@@ -74,7 +74,7 @@ struct CustomNodesExample: View {
         ),
     ]
 
-    @State var edges: [Edge<EmptyEdgeData>] = []
+    @State var edges: [FlowEdge<EmptyEdgeData>] = []
 
     var body: some View {
         SwiftFlow(

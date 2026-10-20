@@ -3,8 +3,8 @@ import Testing
 
 @testable import SwiftFlow
 
-@Suite("ViewportController")
-struct ViewportControllerTests {
+@Suite("SwiftFlowInstance")
+struct SwiftFlowInstanceTests {
 
   @MainActor
   @Test func initDefaults() {
@@ -90,7 +90,7 @@ struct ViewportControllerTests {
     instance.viewport = Viewport(x: 0, y: 0, zoom: 1.0)
     instance.viewSize = CGSize(width: 800, height: 600)
     instance.zoomIn(animated: false)
-    #expect(instance.viewport.zoom == 1.25)
+    #expect(instance.viewport.zoom == 1.2)
   }
 
   @MainActor
@@ -99,7 +99,7 @@ struct ViewportControllerTests {
     instance.viewport = Viewport(x: 0, y: 0, zoom: 1.0)
     instance.viewSize = CGSize(width: 800, height: 600)
     instance.zoomOut(animated: false)
-    #expect(instance.viewport.zoom == 0.8)
+    #expect(abs(instance.viewport.zoom - 1 / 1.2) < 0.0001)
   }
 
   @MainActor
@@ -253,7 +253,8 @@ struct ViewportControllerTests {
   @Test func fitViewCentersRequestedNodes() {
     let instance = SwiftFlowInstance()
     instance.viewSize = CGSize(width: 800, height: 600)
-    instance.fitView(nodes: [Node(id: "1", position: XYPosition(x: -100, y: 70), data: "A")],
+    instance.fitView(
+      nodes: [Node(id: "1", position: XYPosition(x: -100, y: 70), data: "A")],
       nodeSizes: ["1": CGSize(width: 100, height: 50)])
     let center = instance.flowToScreenPosition(CGPoint(x: -50, y: 95))
     #expect(center == CGPoint(x: 400, y: 300))

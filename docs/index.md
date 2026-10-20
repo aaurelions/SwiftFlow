@@ -86,7 +86,7 @@ struct ContentView: View {
 
 | Platform | Minimum Version |
 |----------|-----------------|
-| iOS      | 16.0+           |
+| iOS      | 17.0+           |
 | macOS    | 13.0+           |
 | Swift    | 6.1+            |
 

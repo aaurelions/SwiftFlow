@@ -38,11 +38,11 @@ struct BasicFlowExample: View {
         ),
     ]
 
-    @State var edges: [Edge<EmptyEdgeData>] = [
-        Edge(id: "e1-2", source: "1", target: "2", markerEnd: .arrowClosed),
-        Edge(id: "e1-3", source: "1", target: "3", markerEnd: .arrowClosed),
-        Edge(id: "e2-4", source: "2", target: "4", markerEnd: .arrowClosed),
-        Edge(id: "e3-4", source: "3", target: "4", markerEnd: .arrowClosed),
+    @State var edges: [FlowEdge<EmptyEdgeData>] = [
+        FlowEdge(id: "e1-2", source: "1", target: "2", markerEnd: .arrowClosed),
+        FlowEdge(id: "e1-3", source: "1", target: "3", markerEnd: .arrowClosed),
+        FlowEdge(id: "e2-4", source: "2", target: "4", markerEnd: .arrowClosed),
+        FlowEdge(id: "e3-4", source: "3", target: "4", markerEnd: .arrowClosed),
     ]
 
     var body: some View {

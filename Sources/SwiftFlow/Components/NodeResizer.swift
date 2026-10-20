@@ -9,16 +9,18 @@ public enum ResizeDirection: String, Sendable, CaseIterable {
 
 /// A resize handle that users embed in their node views to enable resizing.
 ///
+/// `NodeResizer` renders one handle at `direction`. It is a convenience
+/// wrapper around `NodeResizeControl`; use several instances for several
+/// handles. Inside a canvas it resizes the node itself (see `NodeResizeControl`);
+/// `onResize` reports the new width and height.
+///
 /// ```swift
 /// if node.selected {
 ///     NodeResizer(
 ///         nodeId: node.id,
 ///         direction: .bottomRight,
 ///         minWidth: 100, maxWidth: 500,
-///         minHeight: 50, maxHeight: 400,
-///         onResize: { w, h in
-///             onNodesChange?([.dimensions(id: node.id, width: w, height: h)])
-///         }
+///         minHeight: 50, maxHeight: 400
 ///     )
 /// }
 /// ```
@@ -34,8 +36,6 @@ public struct NodeResizer: View {
   public var onResizeStart: (() -> Void)?
   public var onResizeEnd: (() -> Void)?
   public var shouldResize: ((CGFloat, CGFloat) -> Bool)?
-
-  @State private var startSize: CGSize?
 
   public init(
     nodeId: String,
@@ -64,61 +64,12 @@ public struct NodeResizer: View {
   }
 
   public var body: some View {
-    GeometryReader { geo in
-      Circle()
-        .fill(Color.white)
-        .frame(width: handleSize, height: handleSize)
-        .overlay(Circle().stroke(color, lineWidth: 1.5))
-        .position(handlePosition(in: geo.size))
-        .gesture(
-          DragGesture()
-            .onChanged { value in
-              if startSize == nil {
-                startSize = geo.size
-                onResizeStart?()
-              }
-              guard let start = startSize else { return }
-              let delta = translationForDirection(value.translation)
-              let w = min(maxWidth, max(minWidth, start.width + delta.width))
-              let h = min(maxHeight, max(minHeight, start.height + delta.height))
-              if shouldResize?(w, h) ?? true {
-                onResize?(w, h)
-              }
-            }
-            .onEnded { _ in
-              startSize = nil
-              onResizeEnd?()
-            }
-        )
-    }
-    .allowsHitTesting(true)
-  }
-
-  private var handleSize: CGFloat { 10 }
-
-  private func handlePosition(in size: CGSize) -> CGPoint {
-    switch direction {
-    case .topLeft: return CGPoint(x: 0, y: 0)
-    case .top: return CGPoint(x: size.width / 2, y: 0)
-    case .topRight: return CGPoint(x: size.width, y: 0)
-    case .left: return CGPoint(x: 0, y: size.height / 2)
-    case .right: return CGPoint(x: size.width, y: size.height / 2)
-    case .bottomLeft: return CGPoint(x: 0, y: size.height)
-    case .bottom: return CGPoint(x: size.width / 2, y: size.height)
-    case .bottomRight: return CGPoint(x: size.width, y: size.height)
-    }
-  }
-
-  private func translationForDirection(_ translation: CGSize) -> CGSize {
-    switch direction {
-    case .topLeft: return CGSize(width: -translation.width, height: -translation.height)
-    case .top: return CGSize(width: 0, height: -translation.height)
-    case .topRight: return CGSize(width: translation.width, height: -translation.height)
-    case .left: return CGSize(width: -translation.width, height: 0)
-    case .right: return CGSize(width: translation.width, height: 0)
-    case .bottomLeft: return CGSize(width: -translation.width, height: translation.height)
-    case .bottom: return CGSize(width: 0, height: translation.height)
-    case .bottomRight: return CGSize(width: translation.width, height: translation.height)
-    }
+    NodeResizeControl(
+      nodeId: nodeId, position: direction,
+      minWidth: minWidth, maxWidth: maxWidth,
+      minHeight: minHeight, maxHeight: maxHeight,
+      color: color,
+      onResize: onResize, onResizeStart: onResizeStart, onResizeEnd: onResizeEnd,
+      shouldResize: shouldResize)
   }
 }
