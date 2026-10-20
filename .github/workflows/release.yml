@@ -1,0 +1,94 @@
+name: Release
+
+# Creates a GitHub Release for every pushed version tag (`v1.2.3`).
+# Run it manually with an existing tag to create a missing release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, for example v0.3.1
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  verify:
+    name: Verify tag
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ env.TAG }}
+
+      - name: Check tag format and package version
+        run: |
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag '$TAG' is not a semantic version tag (vMAJOR.MINOR.PATCH)."
+            exit 1
+          fi
+          version="${TAG#v}"
+          skill_version="$(sed -n 's/^  version: "\(.*\)"$/\1/p' SKILL.md)"
+          if [[ "$skill_version" != "$version" ]]; then
+            echo "::error::Tag $TAG does not match SKILL.md version '$skill_version'."
+            exit 1
+          fi
+
+      - name: Select Xcode
+        run: sudo xcode-select -switch /Applications/Xcode.app
+
+      - name: Remove untrusted Homebrew taps
+        run: brew untap aws/tap || true
+
+      - name: Install Swift linters
+        run: brew install swift-format swiftlint
+
+      - name: Check formatting
+        run: swift-format lint --recursive Sources Tests Package.swift
+
+      - name: Run SwiftLint
+        run: swiftlint lint --quiet
+
+      - name: Run tests
+        run: swift test
+
+  release:
+    name: Publish GitHub Release
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          fetch-depth: 0
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Release notes: the body of the tagged release commit (its changelog),
+          # followed by GitHub's generated notes and compare link.
+          git log -1 --format=%b "$TAG^{commit}" > notes.md
+
+          prerelease=()
+          if [[ "$TAG" == *-* ]]; then prerelease=(--prerelease); fi
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release edit "$TAG" --title "$TAG" --notes-file notes.md "${prerelease[@]}"
+          else
+            gh release create "$TAG" --verify-tag --title "$TAG" \
+              --notes-file notes.md --generate-notes "${prerelease[@]}"
+          fi
